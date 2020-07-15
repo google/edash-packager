@@ -11,7 +11,6 @@
 
 #include "packager/base/optional.h"
 #include "packager/media/base/range.h"
-#include "packager/media/formats/webm/mkv_writer.h"
 #include "packager/media/formats/webm/seek_head.h"
 #include "packager/status.h"
 #include "packager/third_party/libwebm/src/mkvmuxer.hpp"
@@ -81,11 +80,11 @@ class Segmenter {
   /// Converts the given time in WebM timecode to ISO BMFF timestamp.
   uint64_t FromWebMTimecode(uint64_t webm_timecode);
   /// Writes the Segment header to @a writer.
-  Status WriteSegmentHeader(uint64_t file_size, MkvWriter* writer);
+  Status WriteSegmentHeader(uint64_t file_size, mkvmuxer::IMkvWriter* writer);
   /// Creates a Cluster object with the given parameters.
   Status SetCluster(uint64_t start_webm_timecode,
                     uint64_t position,
-                    MkvWriter* writer);
+                    mkvmuxer::IMkvWriter* writer);
 
   /// Update segmentation progress using ProgressListener.
   void UpdateProgress(uint64_t progress);

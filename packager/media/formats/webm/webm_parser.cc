@@ -948,7 +948,8 @@ bool WebMListParser::OnListEnd() {
     int64_t bytes_parsed = list_state.bytes_parsed_;
     int id = list_state.id_;
 
-    if (bytes_parsed != list_state.size_)
+    if (bytes_parsed != list_state.size_ && 
+        !(list_state.size_ == kWebMUnknownSize && id == kWebMIdCluster))
       break;
 
     list_state_stack_.pop_back();

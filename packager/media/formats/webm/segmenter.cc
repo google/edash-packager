@@ -222,7 +222,7 @@ uint64_t Segmenter::FromWebMTimecode(uint64_t webm_timecode) {
       time_scale_);
 }
 
-Status Segmenter::WriteSegmentHeader(uint64_t file_size, MkvWriter* writer) {
+Status Segmenter::WriteSegmentHeader(uint64_t file_size, mkvmuxer::IMkvWriter* writer) {
   Status error_status(error::FILE_FAILURE, "Error writing segment header.");
 
   if (!WriteEbmlHeader(writer))
@@ -262,7 +262,7 @@ Status Segmenter::WriteSegmentHeader(uint64_t file_size, MkvWriter* writer) {
 
 Status Segmenter::SetCluster(uint64_t start_webm_timecode,
                              uint64_t position,
-                             MkvWriter* writer) {
+                             mkvmuxer::IMkvWriter* writer) {
   const uint64_t scale = segment_info_.timecode_scale();
   cluster_.reset(new mkvmuxer::Cluster(start_webm_timecode, position, scale));
   cluster_->Init(writer);

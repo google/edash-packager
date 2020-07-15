@@ -13,6 +13,8 @@
       'target_name': 'webm',
       'type': '<(component)',
       'sources': [
+        'buffer_mkv_writer.cc',
+        'buffer_mkv_writer.h',
         'encryptor.cc',
         'encryptor.h',
         'mkv_writer.cc',
