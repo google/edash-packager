@@ -15,16 +15,16 @@
     <AdaptationSet id="1" contentType="video" maxWidth="1280" maxHeight="720" frameRate="30000/1001" subsegmentAlignment="true" par="16:9">
       <SupplementalProperty schemeIdUri="urn:mpeg:dash:adaptation-set-switching:2016" value="0"/>
       <Role schemeIdUri="urn:mpeg:dash:role:2011" value="main"/>
-      <Representation id="1" bandwidth="2627285" codecs="avc1.64001f" mimeType="video/mp4" sar="1:1" width="1280" height="720">
-        <BaseURL>bear-1280x720-video.mp4</BaseURL>
-        <SegmentBase indexRange="862-929" timescale="30000">
-          <Initialization range="0-861"/>
-        </SegmentBase>
-      </Representation>
-      <Representation id="2" bandwidth="973483" codecs="avc1.64001e" mimeType="video/mp4" sar="1:1" width="640" height="360">
+      <Representation id="1" bandwidth="973483" codecs="avc1.64001e" mimeType="video/mp4" sar="1:1" width="640" height="360">
         <BaseURL>bear-640x360-video.mp4</BaseURL>
         <SegmentBase indexRange="863-930" timescale="30000">
           <Initialization range="0-862"/>
+        </SegmentBase>
+      </Representation>
+      <Representation id="2" bandwidth="2627285" codecs="avc1.64001f" mimeType="video/mp4" sar="1:1" width="1280" height="720">
+        <BaseURL>bear-1280x720-video.mp4</BaseURL>
+        <SegmentBase indexRange="862-929" timescale="30000">
+          <Initialization range="0-861"/>
         </SegmentBase>
       </Representation>
     </AdaptationSet>

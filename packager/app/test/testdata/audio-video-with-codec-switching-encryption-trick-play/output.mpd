@@ -36,29 +36,29 @@
         </SegmentBase>
       </Representation>
     </AdaptationSet>
-    <AdaptationSet id="2" contentType="video" width="1280" height="720" frameRate="30000/30030" subsegmentAlignment="true" par="16:9">
+    <AdaptationSet id="2" contentType="audio" subsegmentAlignment="true">
+      <ContentProtection value="cenc" schemeIdUri="urn:mpeg:dash:mp4protection:2011" cenc:default_KID="31323334-3536-3738-3930-313233343536"/>
+      <ContentProtection schemeIdUri="urn:uuid:1077efec-c0b2-4d02-ace3-3c1e52e2fb4b">
+        <cenc:pssh>AAAANHBzc2gBAAAAEHfv7MCyTQKs4zweUuL7SwAAAAExMjM0NTY3ODkwMTIzNDU2AAAAAA==</cenc:pssh>
+      </ContentProtection>
+      <Representation id="3" bandwidth="133663" codecs="mp4a.40.2" mimeType="audio/mp4" audioSamplingRate="44100">
+        <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="2"/>
+        <BaseURL>bear-640x360-audio.mp4</BaseURL>
+        <SegmentBase indexRange="1007-1074" timescale="44100">
+          <Initialization range="0-1006"/>
+        </SegmentBase>
+      </Representation>
+    </AdaptationSet>
+    <AdaptationSet id="3" contentType="video" width="1280" height="720" frameRate="30000/30030" subsegmentAlignment="true" par="16:9">
       <ContentProtection value="cenc" schemeIdUri="urn:mpeg:dash:mp4protection:2011" cenc:default_KID="31323334-3536-3738-3930-313233343536"/>
       <ContentProtection schemeIdUri="urn:uuid:1077efec-c0b2-4d02-ace3-3c1e52e2fb4b">
         <cenc:pssh>AAAANHBzc2gBAAAAEHfv7MCyTQKs4zweUuL7SwAAAAExMjM0NTY3ODkwMTIzNDU2AAAAAA==</cenc:pssh>
       </ContentProtection>
       <EssentialProperty schemeIdUri="http://dashif.org/guidelines/trickmode" value="1"/>
-      <Representation id="3" bandwidth="470530" codecs="avc1.64001f" mimeType="video/mp4" sar="1:1" maxPlayoutRate="30" codingDependency="false">
+      <Representation id="4" bandwidth="470530" codecs="avc1.64001f" mimeType="video/mp4" sar="1:1" maxPlayoutRate="30" codingDependency="false">
         <BaseURL>bear-1280x720-video-trick_play_factor_1.mp4</BaseURL>
         <SegmentBase indexRange="1129-1196" timescale="30000">
           <Initialization range="0-1128"/>
-        </SegmentBase>
-      </Representation>
-    </AdaptationSet>
-    <AdaptationSet id="3" contentType="audio" subsegmentAlignment="true">
-      <ContentProtection value="cenc" schemeIdUri="urn:mpeg:dash:mp4protection:2011" cenc:default_KID="31323334-3536-3738-3930-313233343536"/>
-      <ContentProtection schemeIdUri="urn:uuid:1077efec-c0b2-4d02-ace3-3c1e52e2fb4b">
-        <cenc:pssh>AAAANHBzc2gBAAAAEHfv7MCyTQKs4zweUuL7SwAAAAExMjM0NTY3ODkwMTIzNDU2AAAAAA==</cenc:pssh>
-      </ContentProtection>
-      <Representation id="4" bandwidth="133663" codecs="mp4a.40.2" mimeType="audio/mp4" audioSamplingRate="44100">
-        <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="2"/>
-        <BaseURL>bear-640x360-audio.mp4</BaseURL>
-        <SegmentBase indexRange="1007-1074" timescale="44100">
-          <Initialization range="0-1006"/>
         </SegmentBase>
       </Representation>
     </AdaptationSet>

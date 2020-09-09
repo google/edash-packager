@@ -11,7 +11,7 @@
         </SegmentBase>
       </Representation>
     </AdaptationSet>
-    <AdaptationSet id="1" contentType="video" width="320" height="240" frameRate="1000000/34000" subsegmentAlignment="true" par="16:9">
+    <AdaptationSet id="1" contentType="video" width="320" height="240" frameRate="1000000/33000" subsegmentAlignment="true" par="16:9">
       <Representation id="1" bandwidth="225727" codecs="vp09.00.20.08.01.02.02.02.00" mimeType="video/webm" sar="427:320">
         <BaseURL>bear-320x240-vp9-opus-video.webm</BaseURL>
         <SegmentBase indexRange="302-350" timescale="1000000" presentationTimeOffset="37000">
