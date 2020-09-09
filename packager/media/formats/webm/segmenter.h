@@ -139,7 +139,7 @@ class Segmenter {
   uint64_t progress_target_ = 0;
   uint64_t accumulated_progress_ = 0;
   uint64_t first_timestamp_ = 0;
-  int64_t sample_durations_[2] = {0, 0};
+  uint32_t sample_durations_[2] = {0u, 0u};
   size_t num_samples_ = 0;
   // The position (in bytes) of the start of the Segment payload in the init
   // file.  This is also the size of the header before the SeekHead.
