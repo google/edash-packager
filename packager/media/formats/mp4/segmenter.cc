@@ -138,6 +138,8 @@ Status Segmenter::AddSample(size_t stream_id, const MediaSample& sample) {
   if (!status.ok())
     return status;
 
+  // The duration of the first sample may have been adjusted, so use 
+  // the duration of the second sample instead.
   if (num_samples_ < 2) {
     sample_durations_[num_samples_] = sample.duration();
     num_samples_++;

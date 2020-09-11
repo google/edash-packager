@@ -161,6 +161,8 @@ Status Segmenter::Finalize() {
 Status Segmenter::AddSample(const MediaSample& source_sample) {
   std::shared_ptr<MediaSample> sample(source_sample.Clone());
 
+  // The duration of the first sample may have been adjusted, so use 
+  // the duration of the second sample instead.
   if (num_samples_ < 2) {
     sample_durations_[num_samples_] = sample->duration();
     if (num_samples_ == 0)
