@@ -51,9 +51,8 @@ bool SingleSegmentSegmenter::GetIndexRange(size_t* offset, size_t* size) {
 
 std::vector<Range> SingleSegmentSegmenter::GetSegmentRanges() {
   std::vector<Range> ranges;
-  uint64_t next_offset =
-      ftyp()->ComputeSize() + moov()->ComputeSize() + vod_sidx_->ComputeSize() +
-      vod_sidx_->first_offset;
+  uint64_t next_offset = ftyp()->ComputeSize() + moov()->ComputeSize() +
+                         vod_sidx_->ComputeSize() + vod_sidx_->first_offset;
   for (const SegmentReference& segment_reference : vod_sidx_->references) {
     Range r;
     r.start = next_offset;
@@ -77,10 +76,9 @@ Status SingleSegmentSegmenter::DoInitialize() {
   if (!TempFilePath(options().temp_dir, &temp_file_name_))
     return Status(error::FILE_FAILURE, "Unable to create temporary file.");
   temp_file_.reset(File::Open(temp_file_name_.c_str(), "w"));
-  return temp_file_
-             ? Status::OK
-             : Status(error::FILE_FAILURE,
-                      "Cannot open file to write " + temp_file_name_);
+  return temp_file_ ? Status::OK
+                    : Status(error::FILE_FAILURE,
+                             "Cannot open file to write " + temp_file_name_);
 }
 
 Status SingleSegmentSegmenter::DoFinalize() {
@@ -159,7 +157,7 @@ Status SingleSegmentSegmenter::DoFinalize() {
   return Status::OK;
 }
 
-Status SingleSegmentSegmenter::DoFinalizeSegment() {
+Status SingleSegmentSegmenter::DoFinalizeSegment(int64_t segment_index) {
   DCHECK(sidx());
   DCHECK(fragment_buffer());
   // sidx() contains pre-generated segment references with one reference per
@@ -212,14 +210,15 @@ Status SingleSegmentSegmenter::DoFinalizeSegment() {
   // Append fragment buffer to temp file.
   size_t segment_size = fragment_buffer()->Size();
   Status status = fragment_buffer()->WriteToFile(temp_file_.get());
-  if (!status.ok()) return status;
+  if (!status.ok())
+    return status;
 
   UpdateProgress(vod_ref.subsegment_duration);
   if (muxer_listener()) {
     muxer_listener()->OnSampleDurationReady(sample_duration());
-    muxer_listener()->OnNewSegment(options().output_file_name,
-                                   vod_ref.earliest_presentation_time,
-                                   vod_ref.subsegment_duration, segment_size);
+    muxer_listener()->OnNewSegment(
+        options().output_file_name, vod_ref.earliest_presentation_time,
+        vod_ref.subsegment_duration, segment_size, segment_index);
   }
   return Status::OK;
 }

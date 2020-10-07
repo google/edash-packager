@@ -225,7 +225,7 @@ Status Segmenter::FinalizeSegment(size_t stream_id,
   for (std::unique_ptr<Fragmenter>& fragmenter : fragmenters_)
     fragmenter->ClearFragmentFinalized();
   if (!segment_info.is_subsegment) {
-    Status status = DoFinalizeSegment();
+    Status status = DoFinalizeSegment(segment_info.segment_index);
     // Reset segment information to initial state.
     sidx_->references.clear();
     key_frame_infos_.clear();
@@ -250,8 +250,10 @@ double Segmenter::GetDuration() const {
 void Segmenter::UpdateProgress(uint64_t progress) {
   accumulated_progress_ += progress;
 
-  if (!progress_listener_) return;
-  if (progress_target_ == 0) return;
+  if (!progress_listener_)
+    return;
+  if (progress_target_ == 0)
+    return;
   // It might happen that accumulated progress exceeds progress_target due to
   // computation errors, e.g. rounding error. Cap it so it never reports > 100%
   // progress.
@@ -264,7 +266,8 @@ void Segmenter::UpdateProgress(uint64_t progress) {
 }
 
 void Segmenter::SetComplete() {
-  if (!progress_listener_) return;
+  if (!progress_listener_)
+    return;
   progress_listener_->OnProgress(1.0);
 }
 

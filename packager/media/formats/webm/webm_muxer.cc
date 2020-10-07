@@ -80,7 +80,8 @@ Status WebMMuxer::FinalizeSegment(size_t stream_id,
   }
   return segmenter_->FinalizeSegment(segment_info.start_timestamp,
                                      segment_info.duration,
-                                     segment_info.is_subsegment);
+                                     segment_info.is_subsegment,
+				     segment_info.segment_index);
 }
 
 void WebMMuxer::FireOnMediaStartEvent() {

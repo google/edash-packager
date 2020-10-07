@@ -101,9 +101,11 @@ class Representation {
   /// @param duration is the duration of the segment, in units of the stream's
   ///        time scale.
   /// @param size of the segment in bytes.
+  /// @param segment_index is the current segment index.
   virtual void AddNewSegment(int64_t start_time,
                              int64_t duration,
-                             uint64_t size);
+                             uint64_t size,
+                             int64_t segment_index);
 
   /// Set the sample duration of this Representation.
   /// Sample duration is not available right away especially for live. This
@@ -182,7 +184,9 @@ class Representation {
 
   // Add a SegmentInfo. This function may insert an adjusted SegmentInfo if
   // |allow_approximate_segment_timeline_| is set.
-  void AddSegmentInfo(int64_t start_time, int64_t duration);
+  void AddSegmentInfo(int64_t start_time,
+                      int64_t duration,
+                      int64_t segment_index);
 
   // Check if two timestamps are approximately equal if
   // |allow_approximate_segment_timeline_| is set; Otherwise check whether the
@@ -227,9 +231,7 @@ class Representation {
   BandwidthEstimator bandwidth_estimator_;
   const MpdOptions& mpd_options_;
 
-  // startNumber attribute for SegmentTemplate.
-  // Starts from 1.
-  uint32_t start_number_ = 1;
+  bool stream_just_started_ = false;
 
   // If this is not null, then Representation is responsible for calling the
   // right methods at right timings.

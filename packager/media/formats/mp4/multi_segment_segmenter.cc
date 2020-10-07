@@ -28,8 +28,7 @@ MultiSegmentSegmenter::MultiSegmentSegmenter(const MuxerOptions& options,
                                              std::unique_ptr<FileType> ftyp,
                                              std::unique_ptr<Movie> moov)
     : Segmenter(options, std::move(ftyp), std::move(moov)),
-      styp_(new SegmentType),
-      num_segments_(0) {
+      styp_(new SegmentType) {
   // Use the same brands for styp as ftyp.
   styp_->major_brand = Segmenter::ftyp()->major_brand;
   styp_->compatible_brands = Segmenter::ftyp()->compatible_brands;
@@ -67,8 +66,8 @@ Status MultiSegmentSegmenter::DoFinalize() {
   return Status::OK;
 }
 
-Status MultiSegmentSegmenter::DoFinalizeSegment() {
-  return WriteSegment();
+Status MultiSegmentSegmenter::DoFinalizeSegment(int64_t segment_index) {
+  return WriteSegment(segment_index);
 }
 
 Status MultiSegmentSegmenter::WriteInitSegment() {
@@ -87,7 +86,7 @@ Status MultiSegmentSegmenter::WriteInitSegment() {
   return buffer->WriteToFile(file.get());
 }
 
-Status MultiSegmentSegmenter::WriteSegment() {
+Status MultiSegmentSegmenter::WriteSegment(int64_t segment_index) {
   DCHECK(sidx());
   DCHECK(fragment_buffer());
   DCHECK(styp_);
@@ -112,7 +111,7 @@ Status MultiSegmentSegmenter::WriteSegment() {
   } else {
     file_name = GetSegmentName(options().segment_template,
                                sidx()->earliest_presentation_time,
-                               num_segments_++, options().bandwidth);
+                               segment_index, options().bandwidth);
     file.reset(File::Open(file_name.c_str(), "w"));
     if (!file) {
       return Status(error::FILE_FAILURE,
@@ -157,9 +156,9 @@ Status MultiSegmentSegmenter::WriteSegment() {
   UpdateProgress(segment_duration);
   if (muxer_listener()) {
     muxer_listener()->OnSampleDurationReady(sample_duration());
-    muxer_listener()->OnNewSegment(file_name,
-                                   sidx()->earliest_presentation_time,
-                                   segment_duration, segment_size);
+    muxer_listener()->OnNewSegment(
+        file_name, sidx()->earliest_presentation_time, segment_duration,
+        segment_size, segment_index);
   }
 
   return Status::OK;

@@ -249,6 +249,7 @@ std::unique_ptr<SegmentInfo> MediaHandlerTestBase::GetSegmentInfo(
   info->start_timestamp = start_timestamp;
   info->duration = duration;
   info->is_subsegment = is_subsegment;
+  info->segment_index = start_timestamp / duration;
 
   return info;
 }

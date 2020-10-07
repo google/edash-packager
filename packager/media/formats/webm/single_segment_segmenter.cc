@@ -21,9 +21,11 @@ SingleSegmentSegmenter::~SingleSegmentSegmenter() {}
 
 Status SingleSegmentSegmenter::FinalizeSegment(uint64_t start_timestamp,
                                                uint64_t duration_timestamp,
-                                               bool is_subsegment) {
+                                               bool is_subsegment,
+                                               int64_t segment_index) {
   Status status = Segmenter::FinalizeSegment(start_timestamp,
-                                             duration_timestamp, is_subsegment);
+                                             duration_timestamp, is_subsegment,
+					     segment_index);
   if (!status.ok())
     return status;
   // No-op for subsegment in single segment mode.
@@ -35,7 +37,7 @@ Status SingleSegmentSegmenter::FinalizeSegment(uint64_t start_timestamp,
   if (muxer_listener()) {
     const uint64_t size = cluster()->Size();
     muxer_listener()->OnNewSegment(options().output_file_name, start_timestamp,
-                                   duration_timestamp, size);
+                                   duration_timestamp, size, segment_index);
   }
   return Status::OK;
 }

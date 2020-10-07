@@ -157,7 +157,8 @@ void MpdNotifyMuxerListener::OnMediaEnd(const MediaRanges& media_ranges,
         mpd_notifier_->NotifyNewSegment(
             notification_id_.value(), event_info.segment_info.start_time,
             event_info.segment_info.duration,
-            event_info.segment_info.segment_file_size);
+            event_info.segment_info.segment_file_size,
+            event_info.segment_info.segment_index);
         break;
       case EventInfoType::kKeyFrame:
         // NO-OP for DASH.
@@ -175,16 +176,18 @@ void MpdNotifyMuxerListener::OnMediaEnd(const MediaRanges& media_ranges,
 void MpdNotifyMuxerListener::OnNewSegment(const std::string& file_name,
                                           int64_t start_time,
                                           int64_t duration,
-                                          uint64_t segment_file_size) {
+                                          uint64_t segment_file_size,
+                                          int64_t segment_index) {
   if (mpd_notifier_->dash_profile() == DashProfile::kLive) {
     mpd_notifier_->NotifyNewSegment(notification_id_.value(), start_time,
-                                    duration, segment_file_size);
+                                    duration, segment_file_size, segment_index);
     if (mpd_notifier_->mpd_type() == MpdType::kDynamic)
       mpd_notifier_->Flush();
   } else {
     EventInfo event_info;
     event_info.type = EventInfoType::kSegment;
-    event_info.segment_info = {start_time, duration, segment_file_size};
+    event_info.segment_info = {start_time, duration, segment_file_size,
+                               segment_index};
     event_info_.push_back(event_info);
   }
 }

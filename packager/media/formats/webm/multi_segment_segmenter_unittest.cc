@@ -15,6 +15,8 @@ namespace {
 
 const uint32_t kTimeScale = 1000000u;
 const uint64_t kDuration = 1000000u;
+const int64_t kSegmentIndex0 = 0;
+const int64_t kSegmentIndex1 = 1;
 const bool kSubsegment = true;
 
 const uint8_t kBasicSupportDataInit[] = {
@@ -126,7 +128,8 @@ TEST_F(MultiSegmentSegmenterTest, BasicSupport) {
         CreateSample(kKeyFrame, kDuration, kNoSideData);
     ASSERT_OK(segmenter_->AddSample(*sample));
   }
-  ASSERT_OK(segmenter_->FinalizeSegment(0, 8 * kDuration, !kSubsegment));
+  ASSERT_OK(segmenter_->FinalizeSegment(0, 8 * kDuration, !kSubsegment,
+                                        kSegmentIndex0));
   ASSERT_OK(segmenter_->Finalize());
 
   // Verify the resulting data.
@@ -145,14 +148,15 @@ TEST_F(MultiSegmentSegmenterTest, SplitsFilesOnSegment) {
   // Write the samples to the Segmenter.
   for (int i = 0; i < 8; i++) {
     if (i == 5) {
-      ASSERT_OK(segmenter_->FinalizeSegment(0, 5 * kDuration, !kSubsegment));
+      ASSERT_OK(segmenter_->FinalizeSegment(0, 5 * kDuration, !kSubsegment,
+                                            kSegmentIndex0));
     }
     std::shared_ptr<MediaSample> sample =
         CreateSample(kKeyFrame, kDuration, kNoSideData);
     ASSERT_OK(segmenter_->AddSample(*sample));
   }
-  ASSERT_OK(
-      segmenter_->FinalizeSegment(5 * kDuration, 8 * kDuration, !kSubsegment));
+  ASSERT_OK(segmenter_->FinalizeSegment(5 * kDuration, 8 * kDuration,
+                                        !kSubsegment, kSegmentIndex1));
   ASSERT_OK(segmenter_->Finalize());
 
   // Verify the resulting data.
@@ -176,13 +180,15 @@ TEST_F(MultiSegmentSegmenterTest, SplitsClustersOnSubsegment) {
   // Write the samples to the Segmenter.
   for (int i = 0; i < 8; i++) {
     if (i == 5) {
-      ASSERT_OK(segmenter_->FinalizeSegment(0, 5 * kDuration, kSubsegment));
+      ASSERT_OK(segmenter_->FinalizeSegment(0, 5 * kDuration, kSubsegment,
+                                            kSegmentIndex0));
     }
     std::shared_ptr<MediaSample> sample =
         CreateSample(kKeyFrame, kDuration, kNoSideData);
     ASSERT_OK(segmenter_->AddSample(*sample));
   }
-  ASSERT_OK(segmenter_->FinalizeSegment(0, 8 * kDuration, !kSubsegment));
+  ASSERT_OK(segmenter_->FinalizeSegment(0, 8 * kDuration, !kSubsegment,
+                                        kSegmentIndex0));
   ASSERT_OK(segmenter_->Finalize());
 
   // Verify the resulting data.

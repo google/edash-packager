@@ -85,7 +85,7 @@ Status WebVttTextOutputHandler::OnSegmentInfo(const SegmentInfo& info) {
   total_duration_ms_ += info.duration;
 
   const std::string& segment_template = muxer_options_.segment_template;
-  const uint32_t index = segment_index_++;
+  const uint32_t index = info.segment_index;
   const uint64_t start = info.start_timestamp;
   const uint64_t duration = info.duration;
   const uint32_t bandwidth = muxer_options_.bandwidth;
@@ -110,7 +110,8 @@ Status WebVttTextOutputHandler::OnSegmentInfo(const SegmentInfo& info) {
 
   // Update the manifest with our new file.
   const uint64_t size = File::GetFileSize(filename.c_str());
-  muxer_listener_->OnNewSegment(filename, start, duration, size);
+  muxer_listener_->OnNewSegment(filename, start, duration, size, 
+		  info.segment_index);
 
   return Status::OK;
 }

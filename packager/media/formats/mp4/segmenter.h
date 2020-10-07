@@ -124,7 +124,7 @@ class Segmenter {
  private:
   virtual Status DoInitialize() = 0;
   virtual Status DoFinalize() = 0;
-  virtual Status DoFinalizeSegment() = 0;
+  virtual Status DoFinalizeSegment(int64_t segment_index) = 0;
 
   uint32_t GetReferenceStreamId();
 

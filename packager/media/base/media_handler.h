@@ -57,6 +57,7 @@ struct SegmentInfo {
   bool is_encrypted = false;
   int64_t start_timestamp = -1;
   int64_t duration = 0;
+  int64_t segment_index = 0;
   // This is only available if key rotation is enabled. Note that we may have
   // a |key_rotation_encryption_config| even if the segment is not encrypted,
   // which is the case for clear lead.

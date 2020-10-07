@@ -52,6 +52,8 @@ class TextChunker : public MediaHandler {
   int64_t segment_start_ = -1;     // Set when the first sample comes in.
   int64_t segment_duration_ = -1;  // Set in OnStreamInfo.
 
+  int64_t num_cues_ = 0;
+
   // All samples that make up the current segment. We must store the samples
   // until the segment ends because a cue event may end the segment sooner
   // than we expected.
