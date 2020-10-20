@@ -476,7 +476,19 @@ class PackagerAppTest(unittest.TestCase):
                 default_language=None,
                 segment_duration=1.0,
                 use_fake_clock=True,
-                allow_codec_switching=False):
+                allow_codec_switching=False,
+                sbd_url_all=None,
+                sbd_template_all=None,
+                sbd_key_all=None,
+                sbd_url_video=None,
+                sbd_template_video=None,
+                sbd_key_video=None,
+                sbd_url_audio=None,
+                sbd_template_audio=None,
+                sbd_key_audio=None,
+                sbd_url_text=None,
+                sbd_template_text=None,
+                sbd_key_text=None):
     flags = []
 
     if not strip_parameter_set_nalus:
@@ -553,6 +565,34 @@ class PackagerAppTest(unittest.TestCase):
 
     if utc_timings:
       flags += ['--utc_timings', utc_timings]
+
+    if sbd_url_all:
+      flags += ['--sbd_url_all', sbd_url_all]
+    if sbd_template_all:
+      flags += ['--sbd_template_all', sbd_template_all]
+    if sbd_key_all:
+      flags += ['--sbd_key_all', sbd_key_all]
+
+    if sbd_url_video:
+      flags += ['--sbd_url_video', sbd_url_video]
+    if sbd_template_video:
+      flags += ['--sbd_template_video', sbd_template_video]
+    if sbd_key_video:
+      flags += ['--sbd_key_video', sbd_key_video]
+
+    if sbd_url_audio:
+      flags += ['--sbd_url_audio', sbd_url_audio]
+    if sbd_template_audio:
+      flags += ['--sbd_template_audio', sbd_template_audio]
+    if sbd_key_audio:
+      flags += ['--sbd_key_audio', sbd_key_audio]
+
+    if sbd_url_text:
+      flags += ['--sbd_url_text', sbd_url_text]
+    if sbd_template_text:
+      flags += ['--sbd_template_text', sbd_template_text]
+    if sbd_key_text:
+      flags += ['--sbd_key_text', sbd_key_text]
 
     if generate_static_live_mpd:
       flags += ['--generate_static_live_mpd']
@@ -785,6 +825,27 @@ class PackagerFunctionalTest(PackagerAppTest):
         streams,
         self._GetFlags(output_dash=True, output_hls=True))
     self._CheckTestResults('hls-only-dash-only')
+
+  def testSBD(self):
+    streams = [
+        self._GetStream('video'),
+        self._GetStream('audio'),
+    ]
+    self.assertPackageSuccess(
+        streams,
+        self._GetFlags(output_dash=True, 
+            sbd_url_all='all_adaptation_sets', 
+            sbd_template_all='t1', 
+            sbd_key_all='k1=v1,k2=v2',
+            sbd_url_video='video1,video2',
+            sbd_template_video='t2,t3',
+            sbd_key_video='k3=v3:k4=v4' ,
+            sbd_url_audio='audio1,audio2' ,
+            sbd_template_audio='t4,t5',
+            sbd_key_audio='k5=v5:k6=v6'))
+
+
+    self._CheckTestResults('sbd_test')
 
   def testAudioVideoWithLanguageOverride(self):
     self.assertPackageSuccess(

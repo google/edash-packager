@@ -69,3 +69,23 @@ DEFINE_bool(include_mspr_pro_for_playready,
             "If enabled, PlayReady Object <mspr:pro> will be inserted into "
             "<ContentProtection ...> element alongside with <cenc:pssh> "
             "when using PlayReady protection system.");
+
+
+DEFINE_string(sbd_url_all, "", "Comma separated URLs of sbd document.Add to all adaptation sets.");
+DEFINE_string(sbd_template_all, "", "Comma separated template used to create URL query.");
+DEFINE_string(sbd_key_all, "", "Comma separated SBD keys to fetch from sbd client.");
+
+
+DEFINE_string(sbd_url_video, "", "Comma separated URL of sbd document. Add to all video adaptation sets");
+DEFINE_string(sbd_template_video, "", "Comma separated template used to create URL query.");
+DEFINE_string(sbd_key_video, "", "SBD keys to fetch from sbd client.");
+
+
+DEFINE_string(sbd_url_audio, "", "Comma separated URL of sbd document.Add to all adaptation sets.");
+DEFINE_string(sbd_template_audio, "", "Comma separated Template used to create URL query.");
+DEFINE_string(sbd_key_audio, "", "Comma separated SBD keys to fetch from sbd client.");
+
+
+DEFINE_string(sbd_url_text, "", "Comma separated URL of sbd document. Add to all text adapatation sets.");
+DEFINE_string(sbd_template_text, "", "Comma separated Template used to create URL query.");
+DEFINE_string(sbd_key_text, "", "Comma separated SBD key-value pairs.");

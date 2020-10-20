@@ -246,11 +246,78 @@ void RepresentationBaseXmlNode::AddSupplementalProperty(
     const std::string& value) {
   AddDescriptor("SupplementalProperty", scheme_id_uri, value);
 }
+ 
+bool RepresentationBaseXmlNode::AddSBDInfo(
+		const std::vector<MpdParams::SBD>& sbd_adaptation_set, 
+		const std::string& descriptor_name, 
+		const std::string& scheme_id_uri,
+                const std::string& value) {
+
+  for (const auto& sbd: sbd_adaptation_set) {
+  
+    XmlNode descriptor(descriptor_name.c_str());
+    descriptor.SetStringAttribute("schemeIdUri", scheme_id_uri);
+
+    if (!sbd.url_.empty())
+      descriptor.SetStringAttribute("value", sbd.url_);
+  
+    if (!sbd.template_.empty())
+      descriptor.SetStringAttribute("sbd:template", sbd.template_);
+
+    if (!sbd.sbd_keys_.empty()) {
+      for (auto key: sbd.sbd_keys_) {
+        XmlNode st("sbd:Key");
+        st.SetStringAttribute("name", key.first);
+        if (key.second.empty()) {
+          st.SetStringAttribute("defaultValue", "nil");
+        } else {
+          st.SetStringAttribute("defaultValue", key.second);
+        }
+        descriptor.AddChild(st.PassScopedPtr()); 
+      }
+    }
+
+    if (!AddChild(descriptor.PassScopedPtr()))
+      return false;
+  }
+  return true;
+
+}
+
+bool RepresentationBaseXmlNode::AddDescriptorSBD(
+    const std::string& descriptor_name,
+    const std::string& scheme_id_uri,
+    const std::string& value,
+    const MpdOptions& mpd_options) {
+  //Check for Video/Audio/Text/All
+   if (value == "all")
+     return AddSBDInfo(mpd_options.mpd_params.sbd_adaptation_set_all,
+		     descriptor_name, scheme_id_uri, value);
+   else if (value == "video")
+     return AddSBDInfo(mpd_options.mpd_params.sbd_adaptation_set_video,
+		     descriptor_name, scheme_id_uri, value);
+   else if (value == "audio")
+     return AddSBDInfo(mpd_options.mpd_params.sbd_adaptation_set_audio,
+		     descriptor_name, scheme_id_uri, value);
+   else if (value == "text")
+     return AddSBDInfo(mpd_options.mpd_params.sbd_adaptation_set_text,
+		     descriptor_name, scheme_id_uri, value);
+
+  return true;
+}
 
 void RepresentationBaseXmlNode::AddEssentialProperty(
     const std::string& scheme_id_uri,
-    const std::string& value) {
-  AddDescriptor("EssentialProperty", scheme_id_uri, value);
+    const std::string& value,
+    const MpdOptions& mpd_options) {
+
+  if (scheme_id_uri == "urn:mpeg:dash:sbd:2020") {
+    AddDescriptorSBD("EssentialProperty", 
+		                scheme_id_uri, 
+				value, mpd_options); 
+  } else {
+    AddDescriptor("EssentialProperty", scheme_id_uri, value);
+  }
 }
 
 bool RepresentationBaseXmlNode::AddDescriptor(

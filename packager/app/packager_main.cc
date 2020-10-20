@@ -307,6 +307,53 @@ bool ParseProtectionSystems(const std::string& protection_systems_str,
   return true;
 }
 
+// Add SBD params
+void addSBDParams(std::string& FLAGS_sbd_url, std::string& FLAGS_sbd_template,
+		  std::string& FLAGS_sbd_key, std::string content_type,
+		  MpdParams& mpd_params) {
+  //Get comma separted urls
+  std::vector<std::string> sbd_urls;
+  base::SplitStringUsingSubstr(FLAGS_sbd_url, ",", &sbd_urls);
+
+  std::vector<std::string> sbd_templates;
+  base::SplitStringUsingSubstr(FLAGS_sbd_template, ",", &sbd_templates);
+
+  std::vector<std::vector<std::pair<std::string,std::string>>> sbd_keys_all;
+  if (!FLAGS_sbd_key.empty()) {
+    std::vector<std::string> sbd_keys;
+
+    base::SplitStringUsingSubstr(FLAGS_sbd_key, ":", &sbd_keys);
+    for (auto sbd_key: sbd_keys) {
+      base::StringPairs pairs;
+        if (!base::SplitStringIntoKeyValuePairs(sbd_key, '=', ',',
+                                                &pairs)) {
+          LOG(ERROR) << "Invalid --sbd_key keyname/defaultvalue pairs.";
+      
+        }
+      
+      std::vector<std::pair<std::string,std::string>> v;	
+      for (const auto& string_pair : pairs) {
+        v.push_back(std::make_pair(string_pair.first,string_pair.second));
+      }
+     sbd_keys_all.push_back(v);
+   }
+  }
+
+  //store sbd details in mpd params.
+  for (int i=0;i<(int)sbd_urls.size();i++) {
+   if (content_type == "all")
+     mpd_params.sbd_adaptation_set_all.push_back({sbd_urls[i], sbd_templates[i], sbd_keys_all[i]});
+   if (content_type == "video")
+     mpd_params.sbd_adaptation_set_video.push_back({sbd_urls[i], sbd_templates[i], sbd_keys_all[i]});
+   if (content_type == "audio")
+     mpd_params.sbd_adaptation_set_audio.push_back({sbd_urls[i], sbd_templates[i], sbd_keys_all[i]});
+   if (content_type == "text")
+     mpd_params.sbd_adaptation_set_text.push_back({sbd_urls[i], sbd_templates[i], sbd_keys_all[i]});
+  }
+
+}
+
+
 base::Optional<PackagingParams> GetPackagingParams() {
   PackagingParams packaging_params;
 
@@ -475,6 +522,20 @@ base::Optional<PackagingParams> GetPackagingParams() {
       FLAGS_allow_approximate_segment_timeline;
   mpd_params.allow_codec_switching = FLAGS_allow_codec_switching;
   mpd_params.include_mspr_pro = FLAGS_include_mspr_pro_for_playready;
+
+  if (!FLAGS_sbd_url_all.empty()) 
+    addSBDParams(FLAGS_sbd_url_all, FLAGS_sbd_template_all, FLAGS_sbd_key_all, 
+		    "all", mpd_params); 
+
+  if (!FLAGS_sbd_url_video.empty()) 
+    addSBDParams(FLAGS_sbd_url_video, FLAGS_sbd_template_video, FLAGS_sbd_key_video, 
+		    "video", mpd_params); 
+  if (!FLAGS_sbd_url_audio.empty()) 
+    addSBDParams(FLAGS_sbd_url_audio, FLAGS_sbd_template_audio, FLAGS_sbd_key_audio, 
+		    "audio", mpd_params); 
+  if (!FLAGS_sbd_url_text.empty()) 
+    addSBDParams(FLAGS_sbd_url_text, FLAGS_sbd_template_text, FLAGS_sbd_key_text, 
+		    "text", mpd_params); 
 
   HlsParams& hls_params = packaging_params.hls_params;
   if (!GetHlsPlaylistType(FLAGS_hls_playlist_type, &hls_params.playlist_type)) {

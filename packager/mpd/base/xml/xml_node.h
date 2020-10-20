@@ -20,6 +20,7 @@
 #include "packager/mpd/base/content_protection_element.h"
 #include "packager/mpd/base/media_info.pb.h"
 #include "packager/mpd/base/xml/scoped_xml_ptr.h"
+#include "packager/mpd/base/mpd_options.h"
 
 namespace shaka {
 
@@ -112,7 +113,8 @@ class RepresentationBaseXmlNode : public XmlNode {
   /// @param scheme_id_uri is content of the schemeIdUri attribute.
   /// @param value is the content of value attribute.
   void AddEssentialProperty(const std::string& scheme_id_uri,
-                            const std::string& value);
+                            const std::string& value,
+			    const MpdOptions& mpd_options);
 
  protected:
   explicit RepresentationBaseXmlNode(const char* name);
@@ -125,6 +127,15 @@ class RepresentationBaseXmlNode : public XmlNode {
                      const std::string& scheme_id_uri,
                      const std::string& value);
 
+  bool AddDescriptorSBD(const std::string& descriptor_name,
+                        const std::string& scheme_id_uri,
+                        const std::string& value,
+		        const MpdOptions& mpd_options);
+
+  bool AddSBDInfo(const std::vector<MpdParams::SBD>& sbd_adaptation_set, 
+		  const std::string& descriptor_name, 
+		  const std::string& scheme_id_uri,
+                  const std::string& value);
  private:
   bool AddContentProtectionElement(
       const ContentProtectionElement& content_protection_element);

@@ -87,6 +87,18 @@ struct MpdParams {
   /// <ContentProtection ...> element alongside with <cenc:pssh>
   /// when using PlayReady protection system.
   bool include_mspr_pro = true;
+  /// Session Based Description Document flags.
+  
+  struct SBD {
+    std::string url_;
+    std::string template_;
+    std::vector<std::pair<std::string,std::string>> sbd_keys_;
+  };
+  std::vector<SBD> sbd_adaptation_set_video;
+  std::vector<SBD> sbd_adaptation_set_audio;
+  std::vector<SBD> sbd_adaptation_set_text;
+  std::vector<SBD> sbd_adaptation_set_all;
+
 };
 
 }  // namespace shaka
