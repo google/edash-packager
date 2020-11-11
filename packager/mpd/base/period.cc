@@ -15,23 +15,6 @@
 namespace shaka {
 namespace {
 
-// The easiest way to check whether two protobufs are equal, is to compare the
-// serialized version.
-bool ProtectedContentEq(
-    const MediaInfo::ProtectedContent& content_protection1,
-    const MediaInfo::ProtectedContent& content_protection2) {
-  return content_protection1.SerializeAsString() ==
-         content_protection2.SerializeAsString();
-}
-
-std::set<std::string> GetUUIDs(
-    const MediaInfo::ProtectedContent& protected_content) {
-  std::set<std::string> uuids;
-  for (const auto& entry : protected_content.content_protection_entry())
-    uuids.insert(entry.uuid());
-  return uuids;
-}
-
 const std::string& GetDefaultAudioLanguage(const MpdOptions& mpd_options) {
   return mpd_options.mpd_params.default_language;
 }
@@ -85,8 +68,8 @@ AdaptationSet* Period::GetOrCreateAdaptationSet(
   std::list<AdaptationSet*>& adaptation_sets = adaptation_set_list_map_[key];
 
   for (AdaptationSet* adaptation_set : adaptation_sets) {
-    if (protected_adaptation_set_map_.Match(
-            *adaptation_set, media_info, content_protection_in_adaptation_set))
+    if (adaptation_set->MatchAdaptationSet(
+            media_info, content_protection_in_adaptation_set))
       return adaptation_set;
   }
 
@@ -101,14 +84,8 @@ AdaptationSet* Period::GetOrCreateAdaptationSet(
     return nullptr;
   }
 
-  if (content_protection_in_adaptation_set &&
-      media_info.has_protected_content()) {
-    protected_adaptation_set_map_.Register(*new_adaptation_set, media_info);
-    AddContentProtectionElements(media_info, new_adaptation_set.get());
-  }
   for (AdaptationSet* adaptation_set : adaptation_sets) {
-    if (protected_adaptation_set_map_.Switchable(*adaptation_set,
-                                                 *new_adaptation_set)) {
+    if (adaptation_set->SwitchableAdaptationSet(*new_adaptation_set)) {
       adaptation_set->AddAdaptationSetSwitching(new_adaptation_set.get());
       new_adaptation_set->AddAdaptationSetSwitching(adaptation_set);
     }
@@ -246,6 +223,13 @@ bool Period::SetNewAdaptationSetAttributes(
     // In practice it doesn't really make sense to adapt between text tracks.
     new_adaptation_set->ForceSetSegmentAlignment(true);
   }
+
+  if (content_protection_in_adaptation_set &&
+      media_info.has_protected_content()) {
+    new_adaptation_set->set_protected_content(media_info);
+    AddContentProtectionElements(media_info, new_adaptation_set);
+  }
+
   return true;
 }
 
@@ -270,11 +254,9 @@ AdaptationSet* Period::FindMatchingAdaptationSetForTrickPlay(
     adaptation_sets = &trickplay_cache_[*adaptation_set_key];
   }
   for (AdaptationSet* adaptation_set : *adaptation_sets) {
-    if (protected_adaptation_set_map_.Match(
-            *adaptation_set, media_info,
-            content_protection_in_adaptation_set)) {
+    if (adaptation_set->MatchAdaptationSet(
+            media_info, content_protection_in_adaptation_set))
       return adaptation_set;
-    }
   }
 
   return nullptr;
@@ -286,54 +268,6 @@ std::string Period::GetAdaptationSetKeyForTrickPlay(
   media_info_no_trickplay.mutable_video_info()->clear_playback_rate();
   return GetAdaptationSetKey(media_info_no_trickplay,
                              mpd_options_.mpd_params.allow_codec_switching);
-}
-
-void Period::ProtectedAdaptationSetMap::Register(
-    const AdaptationSet& adaptation_set,
-    const MediaInfo& media_info) {
-  DCHECK(!ContainsKey(protected_content_map_, &adaptation_set));
-  protected_content_map_[&adaptation_set] = media_info.protected_content();
-}
-
-bool Period::ProtectedAdaptationSetMap::Match(
-    const AdaptationSet& adaptation_set,
-    const MediaInfo& media_info,
-    bool content_protection_in_adaptation_set) {
-  if (adaptation_set.codec() != GetBaseCodec(media_info))
-    return false;
-
-  if (!content_protection_in_adaptation_set)
-    return true;
-
-  const auto protected_content_it =
-      protected_content_map_.find(&adaptation_set);
-  // If the AdaptationSet ID is not registered in the map, then it is clear
-  // content.
-  if (protected_content_it == protected_content_map_.end())
-    return !media_info.has_protected_content();
-  if (!media_info.has_protected_content())
-    return false;
-
-  return ProtectedContentEq(protected_content_it->second,
-                            media_info.protected_content());
-}
-
-bool Period::ProtectedAdaptationSetMap::Switchable(
-    const AdaptationSet& adaptation_set_a,
-    const AdaptationSet& adaptation_set_b) {
-  const auto protected_content_it_a =
-      protected_content_map_.find(&adaptation_set_a);
-  const auto protected_content_it_b =
-      protected_content_map_.find(&adaptation_set_b);
-
-  if (protected_content_it_a == protected_content_map_.end())
-    return protected_content_it_b == protected_content_map_.end();
-  if (protected_content_it_b == protected_content_map_.end())
-    return false;
-  // Get all the UUIDs of the AdaptationSet. If another AdaptationSet has the
-  // same UUIDs then those are switchable.
-  return GetUUIDs(protected_content_it_a->second) ==
-         GetUUIDs(protected_content_it_b->second);
 }
 
 Period::~Period() {

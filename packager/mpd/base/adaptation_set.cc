@@ -170,11 +170,70 @@ AdaptationSet::AdaptationSet(const std::string& language,
       language_(language),
       mpd_options_(mpd_options),
       segments_aligned_(kSegmentAlignmentUnknown),
-      force_set_segment_alignment_(false) {
+      force_set_segment_alignment_(false),
+      protected_content_(nullptr) {
   DCHECK(counter);
 }
 
-AdaptationSet::~AdaptationSet() {}
+AdaptationSet::~AdaptationSet() {
+  delete protected_content_;
+}
+
+void AdaptationSet::set_protected_content(const MediaInfo& media_info) {
+  DCHECK(!protected_content_);
+  protected_content_ =
+      new MediaInfo::ProtectedContent(media_info.protected_content());
+}
+
+// The easiest way to check whether two protobufs are equal, is to compare the
+// serialized version.
+bool ProtectedContentEq(
+    const MediaInfo::ProtectedContent& content_protection1,
+    const MediaInfo::ProtectedContent& content_protection2) {
+  return content_protection1.SerializeAsString() ==
+         content_protection2.SerializeAsString();
+}
+
+bool AdaptationSet::MatchAdaptationSet(
+    const MediaInfo& media_info,
+    bool content_protection_in_adaptation_set) {
+  if (codec_ != GetBaseCodec(media_info))
+    return false;
+
+  if (!content_protection_in_adaptation_set)
+    return true;
+
+  if (!protected_content_)
+    return !media_info.has_protected_content();
+
+  if (!media_info.has_protected_content())
+    return false;
+
+  return protected_content_->SerializeAsString() ==
+         media_info.protected_content().SerializeAsString();
+}
+
+std::set<std::string> GetUUIDs(
+    const MediaInfo::ProtectedContent* protected_content) {
+  std::set<std::string> uuids;
+  for (const auto& entry : protected_content->content_protection_entry())
+    uuids.insert(entry.uuid());
+  return uuids;
+}
+
+bool AdaptationSet::SwitchableAdaptationSet(
+    const AdaptationSet& adaptation_set) {
+  if (!protected_content_)
+    return !adaptation_set.protected_content();
+
+  if (!adaptation_set.protected_content())
+    return false;
+
+  // Get all the UUIDs of the AdaptationSet. If another AdaptationSet has the
+  // same UUIDs then those are switchable.
+  return GetUUIDs(protected_content_) ==
+         GetUUIDs(adaptation_set.protected_content());
+}
 
 Representation* AdaptationSet::AddRepresentation(const MediaInfo& media_info) {
   const uint32_t representation_id = (*representation_counter_)++;

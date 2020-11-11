@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "packager/base/optional.h"
+#include "packager/mpd/base/media_info.pb.h"
 #include "packager/mpd/base/xml/scoped_xml_ptr.h"
 
 namespace shaka {
@@ -183,6 +184,29 @@ class AdaptationSet {
   /// @param codec is the new codec to be set.
   void set_codec(const std::string& codec) { codec_ = codec; };
 
+  /// Return ProtectedContent.
+  const MediaInfo::ProtectedContent* protected_content() const {
+    return protected_content_;
+  };
+
+  /// Set AdaptationSet@protected_content.
+  /// @param media_info to extract the ProtectedContent from.
+  void set_protected_content(const MediaInfo& media_info);
+
+  /// Check if the protected content associated with this AdaptationSet  matches
+  /// with the one in |media_info|.
+  /// @param media_info to extract ProtectedContent from.
+  /// @param content_protection_in_adaptation_set to indicate if there is
+  ///        protected content in AdaptationSet.
+  /// @return true if there is a match.
+  bool MatchAdaptationSet(const MediaInfo& media_info,
+                          bool content_protection_in_adaptation_set);
+
+  /// Check if the adaptation sets are switchable.
+  /// @param adaptation_set to compare this AdaptationSet with.
+  /// @return true if AdaptationSets are switchable.
+  bool SwitchableAdaptationSet(const AdaptationSet& adaptation_set);
+
  protected:
   /// @param language is the language of this AdaptationSet. Mainly relevant for
   ///        audio.
@@ -317,6 +341,9 @@ class AdaptationSet {
   // and HD videos in different AdaptationSets can share the same trick play
   // stream.
   std::vector<const AdaptationSet*> trick_play_references_;
+
+  // ProtectedContent of this AdaptationSet.
+  MediaInfo::ProtectedContent* protected_content_;
 };
 
 }  // namespace shaka
