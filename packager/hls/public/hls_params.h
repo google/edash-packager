@@ -62,6 +62,9 @@ struct HlsParams {
   /// Custom EXT-X-MEDIA-SEQUENCE value to allow continuous media playback
   /// across packager restarts. See #691 for details.
   uint32_t media_sequence_number = 0;
+  /// Enable generation of EXT-X-PROGRAM-DATE-TIME tag.
+  bool add_ext_x_program_date_time = false;
+  uint32_t packaging_time_offset_ms = 0;
 };
 
 }  // namespace shaka

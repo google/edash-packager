@@ -43,6 +43,7 @@ const char kFairPlayKeyUri[] = "skd://www.license.com/getkey?key_id=testing";
 const char kIdentityKeyUri[] = "https://www.license.com/getkey?key_id=testing";
 const HlsPlaylistType kVodPlaylist = HlsPlaylistType::kVod;
 const HlsPlaylistType kLivePlaylist = HlsPlaylistType::kLive;
+const base::Time kRefTime = base::Time();
 
 class MockMasterPlaylist : public MasterPlaylist {
  public:
@@ -215,7 +216,7 @@ TEST_F(SimpleHlsNotifierTest, NotifyNewSegment) {
   const std::string segment_name = "segmentname";
   EXPECT_CALL(*mock_media_playlist,
               AddSegment(StrEq(kTestPrefix + segment_name), kStartTime,
-                         kDuration, 203, kSize));
+                         kDuration, 203, kSize, kRefTime));
 
   const double kLongestSegmentDuration = 11.3;
   const uint32_t kTargetDuration = 12;  // ceil(kLongestSegmentDuration).
@@ -435,7 +436,7 @@ TEST_P(SimpleHlsNotifierRebaseUrlTest, Test) {
 
   if (!test_data_.expected_segment_url.empty()) {
     EXPECT_CALL(*mock_media_playlist,
-                AddSegment(test_data_.expected_segment_url, _, _, _, _));
+                AddSegment(test_data_.expected_segment_url, _, _, _, _, kRefTime));
   }
   EXPECT_CALL(*factory,
               CreateMock(_, StrEq(test_data_.expected_relative_playlist_path),
@@ -544,7 +545,7 @@ TEST_P(LiveOrEventSimpleHlsNotifierTest, NotifyNewSegment) {
   const std::string segment_name = "segmentname";
   EXPECT_CALL(*mock_media_playlist,
               AddSegment(StrEq(kTestPrefix + segment_name), kStartTime,
-                         kDuration, _, kSize));
+                         kDuration, _, kSize, kRefTime));
 
   const double kLongestSegmentDuration = 11.3;
   const uint32_t kTargetDuration = 12;  // ceil(kLongestSegmentDuration).
@@ -617,7 +618,7 @@ TEST_P(LiveOrEventSimpleHlsNotifierTest, NotifyNewSegmentsWithMultipleStreams) {
   EXPECT_TRUE(notifier.NotifyNewStream(media_info, "playlist2.m3u8", "name",
                                        "groupid", &stream_id2));
 
-  EXPECT_CALL(*mock_media_playlist1, AddSegment(_, _, _, _, _)).Times(1);
+  EXPECT_CALL(*mock_media_playlist1, AddSegment(_, _, _, _, _, kRefTime)).Times(1);
   const double kLongestSegmentDuration = 11.3;
   const uint32_t kTargetDuration = 12;  // ceil(kLongestSegmentDuration).
   EXPECT_CALL(*mock_media_playlist1, GetLongestSegmentDuration())
@@ -648,7 +649,7 @@ TEST_P(LiveOrEventSimpleHlsNotifierTest, NotifyNewSegmentsWithMultipleStreams) {
   EXPECT_TRUE(notifier.NotifyNewSegment(stream_id1, "segment_name", kStartTime,
                                         kDuration, 0, kSize));
 
-  EXPECT_CALL(*mock_media_playlist2, AddSegment(_, _, _, _, _)).Times(1);
+  EXPECT_CALL(*mock_media_playlist2, AddSegment(_, _, _, _, _, kRefTime)).Times(1);
   EXPECT_CALL(*mock_media_playlist2, GetLongestSegmentDuration())
       .WillOnce(Return(kLongestSegmentDuration));
   // Not updating other playlists as target duration does not change.

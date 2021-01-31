@@ -12,9 +12,11 @@
 #include <cmath>
 #include <memory>
 
+#include "packager/app/hls_flags.h"
 #include "packager/base/logging.h"
 #include "packager/base/strings/string_number_conversions.h"
 #include "packager/base/strings/stringprintf.h"
+#include "packager/base/time/time.h"
 #include "packager/file/file.h"
 #include "packager/hls/base/tag.h"
 #include "packager/media/base/language_utils.h"
@@ -170,13 +172,18 @@ class SegmentInfoEntry : public HlsEntry {
                    bool use_byte_range,
                    uint64_t start_byte_offset,
                    uint64_t segment_file_size,
-                   uint64_t previous_segment_end_offset);
+                   uint64_t previous_segment_end_offset,
+                   const base::Time wall_time);
 
   std::string ToString() override;
   int64_t start_time() const { return start_time_; }
   double duration_seconds() const { return duration_seconds_; }
   void set_duration_seconds(double duration_seconds) {
     duration_seconds_ = duration_seconds;
+  }
+
+  const base::Time wall_time() {
+    return wall_time_;
   }
 
  private:
@@ -190,6 +197,7 @@ class SegmentInfoEntry : public HlsEntry {
   const uint64_t start_byte_offset_;
   const uint64_t segment_file_size_;
   const uint64_t previous_segment_end_offset_;
+  const base::Time wall_time_;
 };
 
 SegmentInfoEntry::SegmentInfoEntry(const std::string& file_name,
@@ -198,7 +206,8 @@ SegmentInfoEntry::SegmentInfoEntry(const std::string& file_name,
                                    bool use_byte_range,
                                    uint64_t start_byte_offset,
                                    uint64_t segment_file_size,
-                                   uint64_t previous_segment_end_offset)
+                                   uint64_t previous_segment_end_offset,
+                                   const base::Time wall_time)
     : HlsEntry(HlsEntry::EntryType::kExtInf),
       file_name_(file_name),
       start_time_(start_time),
@@ -206,7 +215,8 @@ SegmentInfoEntry::SegmentInfoEntry(const std::string& file_name,
       use_byte_range_(use_byte_range),
       start_byte_offset_(start_byte_offset),
       segment_file_size_(segment_file_size),
-      previous_segment_end_offset_(previous_segment_end_offset) {}
+      previous_segment_end_offset_(previous_segment_end_offset),
+      wall_time_(wall_time) {}
 
 std::string SegmentInfoEntry::ToString() {
   std::string result = base::StringPrintf("#EXTINF:%.3f,", duration_seconds_);
@@ -409,7 +419,8 @@ void MediaPlaylist::AddSegment(const std::string& file_name,
                                int64_t start_time,
                                int64_t duration,
                                uint64_t start_byte_offset,
-                               uint64_t size) {
+                               uint64_t size,
+                               const base::Time reference_time) {
   if (stream_type_ == MediaPlaylistStreamType::kVideoIFramesOnly) {
     if (key_frames_.empty())
       return;
@@ -424,13 +435,13 @@ void MediaPlaylist::AddSegment(const std::string& file_name,
                                          : std::next(iter)->timestamp;
       AddSegmentInfoEntry(file_name, iter->timestamp,
                           next_timestamp - iter->timestamp,
-                          iter->start_byte_offset, iter->size);
+                          iter->start_byte_offset, iter->size, reference_time);
     }
     key_frames_.clear();
     return;
   }
   return AddSegmentInfoEntry(file_name, start_time, duration, start_byte_offset,
-                             size);
+                             size, reference_time);
 }
 
 void MediaPlaylist::AddKeyFrame(int64_t timestamp,
@@ -478,8 +489,34 @@ bool MediaPlaylist::WriteToFile(const std::string& file_path) {
       media_info_, target_duration_, hls_params_.playlist_type, stream_type_,
       media_sequence_number_, discontinuity_sequence_number_);
 
-  for (const auto& entry : entries_)
+  bool need_ext_date_time = hls_params_.add_ext_x_program_date_time;
+
+  for (const auto& entry : entries_) {
+    switch (entry->type()) {
+    case HlsEntry::EntryType::kExtInf:
+      if (need_ext_date_time) {
+        SegmentInfoEntry* segment_info =
+            reinterpret_cast<SegmentInfoEntry*>(entry.get());
+        base::Time::Exploded time;
+        segment_info->wall_time().UTCExplode(&time);
+        base::StringAppendF(&content,
+                            "#EXT-X-PROGRAM-DATE-TIME:"
+                            "%4d-%02d-%02dT%02d:%02d:%02d.%03dZ\n",
+                            time.year, time.month, time.day_of_month,
+                            time.hour, time.minute, time.second,
+                            time.millisecond);
+        need_ext_date_time = false;
+      }
+      break;
+    case HlsEntry::EntryType::kExtDiscontinuity:
+      // we need to add a new program data time after a discontinuity
+      need_ext_date_time = hls_params_.add_ext_x_program_date_time;
+      break;
+    default:
+      break;
+    }
     base::StringAppendF(&content, "%s\n", entry->ToString().c_str());
+  }
 
   if (hls_params_.playlist_type == HlsPlaylistType::kVod) {
     content += "#EXT-X-ENDLIST\n";
@@ -582,14 +619,15 @@ void MediaPlaylist::AddSegmentInfoEntry(const std::string& segment_file_name,
                                         int64_t start_time,
                                         int64_t duration,
                                         uint64_t start_byte_offset,
-                                        uint64_t size) {
+                                        uint64_t size,
+                                        base::Time reference_time) {
   if (time_scale_ == 0) {
     LOG(WARNING) << "Timescale is not set and the duration for " << duration
                  << " cannot be calculated. The output will be wrong.";
 
     entries_.emplace_back(new SegmentInfoEntry(
         segment_file_name, 0.0, 0.0, use_byte_range_, start_byte_offset, size,
-        previous_segment_end_offset_));
+        previous_segment_end_offset_, reference_time));
     return;
   }
 
@@ -606,24 +644,25 @@ void MediaPlaylist::AddSegmentInfoEntry(const std::string& segment_file_name,
       std::max(longest_segment_duration_seconds_, segment_duration_seconds);
   bandwidth_estimator_.AddBlock(size, segment_duration_seconds);
   current_buffer_depth_ += segment_duration_seconds;
+  const base::Time wall_time = reference_time + base::TimeDelta::FromSeconds(start_time / time_scale_);
 
-  if (!entries_.empty() &&
-      entries_.back()->type() == HlsEntry::EntryType::kExtInf) {
-    const SegmentInfoEntry* segment_info =
-        static_cast<SegmentInfoEntry*>(entries_.back().get());
-    if (segment_info->start_time() > start_time) {
-      LOG(WARNING)
-          << "Insert a discontinuity tag after the segment with start time "
-          << segment_info->start_time() << " as the next segment starts at "
-          << start_time << ".";
-      entries_.emplace_back(new DiscontinuityEntry());
-    }
+  if (!entries_.empty() && start_time < last_segment_start_time_) {
+    LOG(WARNING)
+        << "Insert a discontinuity tag after the segment with start time "
+        << last_segment_start_time_ << " as the next segment starts at "
+        << start_time << ".";
+    entries_.emplace_back(new DiscontinuityEntry());
   }
 
+  last_segment_start_time_ = start_time;
   entries_.emplace_back(new SegmentInfoEntry(
       segment_file_name, start_time, segment_duration_seconds, use_byte_range_,
-      start_byte_offset, size, previous_segment_end_offset_));
+      start_byte_offset, size, previous_segment_end_offset_, wall_time));
   previous_segment_end_offset_ = start_byte_offset + size - 1;
+}
+
+uint64_t MediaPlaylist::LastSegmentStartTime() const {
+ return last_segment_start_time_;
 }
 
 void MediaPlaylist::AdjustLastSegmentInfoEntryDuration(int64_t next_timestamp) {

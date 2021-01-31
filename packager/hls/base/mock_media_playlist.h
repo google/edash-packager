@@ -24,12 +24,13 @@ class MockMediaPlaylist : public MediaPlaylist {
   ~MockMediaPlaylist() override;
 
   MOCK_METHOD1(SetMediaInfo, bool(const MediaInfo& media_info));
-  MOCK_METHOD5(AddSegment,
+  MOCK_METHOD6(AddSegment,
                void(const std::string& file_name,
                     int64_t start_time,
                     int64_t duration,
                     uint64_t start_byte_offset,
-                    uint64_t size));
+                    uint64_t size,
+                    base::Time reference_time));
   MOCK_METHOD3(AddKeyFrame,
                void(int64_t timestamp,
                     uint64_t start_byte_offset,

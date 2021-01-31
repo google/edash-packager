@@ -7,6 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "packager/base/time/time.h"
 #include "packager/base/strings/stringprintf.h"
 #include "packager/file/file.h"
 #include "packager/file/file_closer.h"
@@ -30,6 +31,19 @@ const double kTimeShiftBufferDepth = 20;
 const uint64_t kTimeScale = 90000;
 const uint64_t kMBytes = 1000000;
 const uint64_t kZeroByteOffset = 0;
+const base::Time kRefTime = base::Time();
+
+// Converts timestamp to ISO/IEC 8601:2004 date/time representation,
+//  such as YYYY-MM-DDThh:mm:ss.SSSZ
+std::string timeToString(base::Time ref_time) {
+  const char date_time_tmpl[] = "%4d-%02d-%02dT%02d:%02d:%02d.%03dZ";
+  base::Time::Exploded time;
+  ref_time.UTCExplode(&time);
+  return base::StringPrintf(
+      date_time_tmpl,
+      time.year, time.month, time.day_of_month,
+      time.hour, time.minute, time.second, time.millisecond);
+}
 
 MATCHER_P(MatchesString, expected_string, "") {
   const std::string arg_string(static_cast<const char*>(arg));
@@ -128,7 +142,7 @@ TEST_F(MediaPlaylistMultiSegmentTest, SetMediaInfo) {
 // Verify that AddSegment works (not crash).
 TEST_F(MediaPlaylistMultiSegmentTest, AddSegment) {
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
-  media_playlist_->AddSegment("file1.ts", 900000, 0, kZeroByteOffset, 1000000);
+  media_playlist_->AddSegment("file1.ts", 900000, 0, kZeroByteOffset, 1000000, kRefTime);
 }
 
 // Verify that it returns the display resolution.
@@ -214,9 +228,67 @@ TEST_F(MediaPlaylistSingleSegmentTest, AddSegmentByteRange) {
 
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
   media_playlist_->AddSegment("file.mp4", 0, 10 * kTimeScale, 1000,
-                              1 * kMBytes);
+                              1 * kMBytes, kRefTime);
   media_playlist_->AddSegment("file.mp4", 10 * kTimeScale, 10 * kTimeScale,
-                              1001000, 2 * kMBytes);
+                              1001000, 2 * kMBytes, kRefTime);
+
+  const char kMemoryFilePath[] = "memory://media.m3u8";
+  EXPECT_TRUE(media_playlist_->WriteToFile(kMemoryFilePath));
+  ASSERT_FILE_STREQ(kMemoryFilePath, kExpectedOutput);
+}
+
+TEST_F(MediaPlaylistSingleSegmentTest, AddSegmentByteRangeWithExtXProgramDateTime) {
+  hls_params_.add_ext_x_program_date_time = true;
+  base::Time reference_time;
+  ASSERT_TRUE(base::Time::FromUTCString("2020-09-11 13:37:00.000 UTC",
+                                        &reference_time));
+
+  media_playlist_.reset(new MediaPlaylist(hls_params_, default_file_name_,
+                                          default_name_, default_group_id_));
+
+  valid_video_media_info_.set_media_file_url("file.mp4");
+  valid_video_media_info_.mutable_init_range()->set_begin(0);
+  valid_video_media_info_.mutable_init_range()->set_end(500);
+
+  ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
+
+  uint64_t start_time = 60 * kTimeScale;
+  uint64_t duration = 10 * kTimeScale;
+  base::Time expected_date = reference_time + base::TimeDelta::FromSeconds(60);
+
+  media_playlist_->AddSegment("file.mp4", start_time, duration, 1000,
+                              1 * kMBytes, reference_time);
+  media_playlist_->AddSegment("file.mp4", start_time + duration, duration,
+                              1001000, 2 * kMBytes, reference_time);
+
+  // create a discontinuity
+  base::Time expected_date2 = expected_date + base::TimeDelta::FromSeconds(60);
+  media_playlist_->AddSegment("file2.mp4", 0, duration,
+                              0, 1 * kMBytes, expected_date2);
+
+  std::string kExpectedOutput = base::StringPrintf(
+      "#EXTM3U\n"
+      "#EXT-X-VERSION:6\n"
+      "## Generated with https://github.com/google/shaka-packager version "
+      "test\n"
+      "#EXT-X-TARGETDURATION:10\n"
+      "#EXT-X-PLAYLIST-TYPE:VOD\n"
+      "#EXT-X-MAP:URI=\"file.mp4\",BYTERANGE=\"501@0\"\n"
+      "#EXT-X-PROGRAM-DATE-TIME:%s\n"
+      "#EXTINF:10.000,\n"
+      "#EXT-X-BYTERANGE:1000000@1000\n"
+      "file.mp4\n"
+      "#EXTINF:10.000,\n"
+      "#EXT-X-BYTERANGE:2000000\n"
+      "file.mp4\n"
+      "#EXT-X-DISCONTINUITY\n"
+      "#EXT-X-PROGRAM-DATE-TIME:%s\n"
+      "#EXTINF:10.000,\n"
+      "#EXT-X-BYTERANGE:1000000@0\n"
+      "file2.mp4\n"
+      "#EXT-X-ENDLIST\n",
+          timeToString(expected_date).c_str(),
+          timeToString(expected_date2).c_str());
 
   const char kMemoryFilePath[] = "memory://media.m3u8";
   EXPECT_TRUE(media_playlist_->WriteToFile(kMemoryFilePath));
@@ -261,9 +333,9 @@ TEST_F(MediaPlaylistMultiSegmentTest, GetBitrateFromSegments) {
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 20 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
 
   EXPECT_EQ(2000000u, media_playlist_->MaxBitrate());
   EXPECT_EQ(1600000u, media_playlist_->AvgBitrate());
@@ -273,11 +345,11 @@ TEST_F(MediaPlaylistMultiSegmentTest, GetLongestSegmentDuration) {
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 30 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
   media_playlist_->AddSegment("file3.ts", 40 * kTimeScale, 14 * kTimeScale,
-                              kZeroByteOffset, 3 * kMBytes);
+                              kZeroByteOffset, 3 * kMBytes, kRefTime);
 
   EXPECT_NEAR(30.0, media_playlist_->GetLongestSegmentDuration(), 0.01);
 }
@@ -304,9 +376,9 @@ TEST_F(MediaPlaylistMultiSegmentTest, WriteToFileWithSegments) {
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 30 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -331,10 +403,10 @@ TEST_F(MediaPlaylistMultiSegmentTest,
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddPlacementOpportunity();
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 30 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -362,9 +434,9 @@ TEST_F(MediaPlaylistMultiSegmentTest, WriteToFileWithEncryptionInfo) {
       MediaPlaylist::EncryptionMethod::kSampleAes, "http://example.com", "",
       "0x12345678", "com.widevine", "1/2/4");
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 30 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -394,9 +466,9 @@ TEST_F(MediaPlaylistMultiSegmentTest, WriteToFileWithEncryptionInfoEmptyIv) {
       MediaPlaylist::EncryptionMethod::kSampleAes, "http://example.com", "", "",
       "com.widevine", "");
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 30 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -423,13 +495,13 @@ TEST_F(MediaPlaylistMultiSegmentTest, WriteToFileWithClearLead) {
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
 
   media_playlist_->AddEncryptionInfo(
       MediaPlaylist::EncryptionMethod::kSampleAes, "http://example.com", "",
       "0x12345678", "com.widevine", "1/2/4");
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 30 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -560,9 +632,9 @@ TEST_F(MediaPlaylistMultiSegmentTest, InitSegment) {
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
 
   media_playlist_->AddSegment("file1.mp4", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.mp4", 10 * kTimeScale, 30 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
 
   const char kExpectedOutput[] =
       "#EXTM3U\n"
@@ -593,9 +665,9 @@ TEST_F(MediaPlaylistMultiSegmentTest, SampleAesCenc) {
       "0x12345678", "com.widevine", "1/2/4");
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 30 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -629,9 +701,9 @@ TEST_F(MediaPlaylistMultiSegmentTest, MultipleEncryptionInfo) {
       "0xfedc", "0x12345678", "com.widevine.someother", "1");
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 30 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -667,9 +739,9 @@ TEST_F(LiveMediaPlaylistTest, Basic) {
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 20 * kTimeScale,
-                              kZeroByteOffset, 2 * kMBytes);
+                              kZeroByteOffset, 2 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -690,11 +762,11 @@ TEST_F(LiveMediaPlaylistTest, TimeShifted) {
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 20 * kTimeScale,
-                              kZeroByteOffset, 2 * kMBytes);
+                              kZeroByteOffset, 2 * kMBytes, kRefTime);
   media_playlist_->AddSegment("file3.ts", 30 * kTimeScale, 20 * kTimeScale,
-                              kZeroByteOffset, 2 * kMBytes);
+                              kZeroByteOffset, 2 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -723,11 +795,11 @@ TEST_F(LiveMediaPlaylistTest, TimeShiftedWithEncryptionInfo) {
       "0xfedc", "0x12345678", "com.widevine.someother", "1");
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 20 * kTimeScale,
-                              kZeroByteOffset, 2 * kMBytes);
+                              kZeroByteOffset, 2 * kMBytes, kRefTime);
   media_playlist_->AddSegment("file3.ts", 30 * kTimeScale, 20 * kTimeScale,
-                              kZeroByteOffset, 2 * kMBytes);
+                              kZeroByteOffset, 2 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -756,7 +828,7 @@ TEST_F(LiveMediaPlaylistTest, TimeShiftedWithEncryptionInfoShifted) {
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
 
   media_playlist_->AddEncryptionInfo(
       MediaPlaylist::EncryptionMethod::kSampleAes, "http://example.com", "",
@@ -766,7 +838,7 @@ TEST_F(LiveMediaPlaylistTest, TimeShiftedWithEncryptionInfoShifted) {
       "0xfedc", "0x12345678", "com.widevine.someother", "1");
 
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 20 * kTimeScale,
-                              kZeroByteOffset, 2 * kMBytes);
+                              kZeroByteOffset, 2 * kMBytes, kRefTime);
 
   media_playlist_->AddEncryptionInfo(
       MediaPlaylist::EncryptionMethod::kSampleAes, "http://example.com", "",
@@ -776,7 +848,7 @@ TEST_F(LiveMediaPlaylistTest, TimeShiftedWithEncryptionInfoShifted) {
       "0xfedd", "0x22345678", "com.widevine.someother", "1");
 
   media_playlist_->AddSegment("file3.ts", 30 * kTimeScale, 20 * kTimeScale,
-                              kZeroByteOffset, 2 * kMBytes);
+                              kZeroByteOffset, 2 * kMBytes, kRefTime);
 
   media_playlist_->AddEncryptionInfo(
       MediaPlaylist::EncryptionMethod::kSampleAes, "http://example.com", "",
@@ -786,7 +858,7 @@ TEST_F(LiveMediaPlaylistTest, TimeShiftedWithEncryptionInfoShifted) {
       "0xfede", "0x32345678", "com.widevine.someother", "1");
 
   media_playlist_->AddSegment("file4.ts", 50 * kTimeScale, 20 * kTimeScale,
-                              kZeroByteOffset, 2 * kMBytes);
+                              kZeroByteOffset, 2 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -829,9 +901,9 @@ TEST_F(EventMediaPlaylistTest, Basic) {
   ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
 
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 20 * kTimeScale,
-                              kZeroByteOffset, 2 * kMBytes);
+                              kZeroByteOffset, 2 * kMBytes, kRefTime);
   const char kExpectedOutput[] =
       "#EXTM3U\n"
       "#EXT-X-VERSION:6\n"
@@ -871,11 +943,11 @@ TEST_F(IFrameMediaPlaylistTest, SingleSegment) {
   media_playlist_->AddKeyFrame(0, 1000, 2345);
   media_playlist_->AddKeyFrame(2 * kTimeScale, 5000, 6345);
   media_playlist_->AddSegment("file.mp4", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddKeyFrame(11 * kTimeScale, kMBytes + 1000, 2345);
   media_playlist_->AddKeyFrame(15 * kTimeScale, kMBytes + 3345, 12345);
   media_playlist_->AddSegment("file.mp4", 10 * kTimeScale, 10 * kTimeScale,
-                              1001000, 2 * kMBytes);
+                              1001000, 2 * kMBytes, kRefTime);
 
   const char kExpectedOutput[] =
       "#EXTM3U\n"
@@ -905,6 +977,58 @@ TEST_F(IFrameMediaPlaylistTest, SingleSegment) {
   ASSERT_FILE_STREQ(kMemoryFilePath, kExpectedOutput);
 }
 
+TEST_F(IFrameMediaPlaylistTest, SingleSegmentWithExtXProgramDateTime) {
+  hls_params_.add_ext_x_program_date_time = true;
+  base::Time reference_time;
+  ASSERT_TRUE(base::Time::FromUTCString("2020-09-11 13:37:00.000 UTC",
+                                        &reference_time));
+  media_playlist_.reset(new MediaPlaylist(hls_params_, default_file_name_,
+                                          default_name_, default_group_id_));
+
+  valid_video_media_info_.set_media_file_url("file.mp4");
+  valid_video_media_info_.mutable_init_range()->set_begin(0);
+  valid_video_media_info_.mutable_init_range()->set_end(500);
+
+  ASSERT_TRUE(media_playlist_->SetMediaInfo(valid_video_media_info_));
+  media_playlist_->AddKeyFrame(0, 1000, 2345);
+  media_playlist_->AddKeyFrame(2 * kTimeScale, 5000, 6345);
+  media_playlist_->AddSegment("file.mp4", 0, 10 * kTimeScale, kZeroByteOffset,
+                              kMBytes, reference_time);
+  media_playlist_->AddKeyFrame(11 * kTimeScale, kMBytes + 1000, 2345);
+  media_playlist_->AddKeyFrame(15 * kTimeScale, kMBytes + 3345, 12345);
+  media_playlist_->AddSegment("file.mp4", 10 * kTimeScale, 10 * kTimeScale,
+                              1001000, 2 * kMBytes, reference_time);
+
+  const std::string kExpectedOutput = base::StringPrintf(
+      "#EXTM3U\n"
+      "#EXT-X-VERSION:6\n"
+      "## Generated with https://github.com/google/shaka-packager version "
+      "test\n"
+      "#EXT-X-TARGETDURATION:9\n"
+      "#EXT-X-PLAYLIST-TYPE:VOD\n"
+      "#EXT-X-I-FRAMES-ONLY\n"
+      "#EXT-X-MAP:URI=\"file.mp4\",BYTERANGE=\"501@0\"\n"
+      "#EXT-X-PROGRAM-DATE-TIME:%s\n"
+      "#EXTINF:2.000,\n"
+      "#EXT-X-BYTERANGE:2345@1000\n"
+      "file.mp4\n"
+      "#EXTINF:9.000,\n"
+      "#EXT-X-BYTERANGE:6345@5000\n"
+      "file.mp4\n"
+      "#EXTINF:4.000,\n"
+      "#EXT-X-BYTERANGE:2345@1001000\n"
+      "file.mp4\n"
+      "#EXTINF:5.000,\n"
+      "#EXT-X-BYTERANGE:12345\n"
+      "file.mp4\n"
+      "#EXT-X-ENDLIST\n",
+          timeToString(reference_time).c_str());
+
+  const char kMemoryFilePath[] = "memory://media.m3u8";
+  EXPECT_TRUE(media_playlist_->WriteToFile(kMemoryFilePath));
+  ASSERT_FILE_STREQ(kMemoryFilePath, kExpectedOutput);
+}
+
 TEST_F(IFrameMediaPlaylistTest, MultiSegment) {
   valid_video_media_info_.set_reference_time_scale(90000);
   valid_video_media_info_.set_segment_template_url("file$Number$.ts");
@@ -913,11 +1037,11 @@ TEST_F(IFrameMediaPlaylistTest, MultiSegment) {
   media_playlist_->AddKeyFrame(0, 1000, 2345);
   media_playlist_->AddKeyFrame(2 * kTimeScale, 5000, 6345);
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddKeyFrame(11 * kTimeScale, 1000, 2345);
   media_playlist_->AddKeyFrame(15 * kTimeScale, 3345, 12345);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 30 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
 
   const char kExpectedOutput[] =
       "#EXTM3U\n"
@@ -954,12 +1078,12 @@ TEST_F(IFrameMediaPlaylistTest, MultiSegmentWithPlacementOpportunity) {
   media_playlist_->AddKeyFrame(0, 1000, 2345);
   media_playlist_->AddKeyFrame(2 * kTimeScale, 5000, 6345);
   media_playlist_->AddSegment("file1.ts", 0, 10 * kTimeScale, kZeroByteOffset,
-                              kMBytes);
+                              kMBytes, kRefTime);
   media_playlist_->AddPlacementOpportunity();
   media_playlist_->AddKeyFrame(11 * kTimeScale, 1000, 2345);
   media_playlist_->AddKeyFrame(15 * kTimeScale, 3345, 12345);
   media_playlist_->AddSegment("file2.ts", 10 * kTimeScale, 30 * kTimeScale,
-                              kZeroByteOffset, 5 * kMBytes);
+                              kZeroByteOffset, 5 * kMBytes, kRefTime);
 
   const char kExpectedOutput[] =
       "#EXTM3U\n"
@@ -1052,7 +1176,7 @@ class MediaPlaylistDeleteSegmentsTest
 TEST_P(MediaPlaylistDeleteSegmentsTest, NoSegmentsDeletedInitially) {
   for (int i = 0; i < kMaxNumSegmentsAvailable; ++i) {
     media_playlist_->AddSegment(kIgnoredSegmentName, GetTime(i), kDuration,
-                                kZeroByteOffset, kMBytes);
+                                kZeroByteOffset, kMBytes, kRefTime);
   }
   for (int i = 0; i < kMaxNumSegmentsAvailable; ++i) {
     EXPECT_FALSE(SegmentDeleted(GetSegmentName(i)));
@@ -1062,7 +1186,7 @@ TEST_P(MediaPlaylistDeleteSegmentsTest, NoSegmentsDeletedInitially) {
 TEST_P(MediaPlaylistDeleteSegmentsTest, OneSegmentDeleted) {
   for (int i = 0; i <= kMaxNumSegmentsAvailable; ++i) {
     media_playlist_->AddSegment(kIgnoredSegmentName, GetTime(i), kDuration,
-                                kZeroByteOffset, kMBytes);
+                                kZeroByteOffset, kMBytes, kRefTime);
   }
   EXPECT_FALSE(SegmentDeleted(GetSegmentName(1)));
   EXPECT_TRUE(SegmentDeleted(GetSegmentName(0)));
@@ -1072,7 +1196,7 @@ TEST_P(MediaPlaylistDeleteSegmentsTest, ManySegments) {
   int many_segments = 50;
   for (int i = 0; i < many_segments; ++i) {
     media_playlist_->AddSegment(kIgnoredSegmentName, GetTime(i), kDuration,
-                                kZeroByteOffset, kMBytes);
+                                kZeroByteOffset, kMBytes, kRefTime);
   }
   const int last_available_segment_index =
       many_segments - kMaxNumSegmentsAvailable;

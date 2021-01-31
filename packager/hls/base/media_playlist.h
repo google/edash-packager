@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "packager/base/macros.h"
+#include "packager/base/time/time.h"
 #include "packager/hls/public/hls_params.h"
 #include "packager/mpd/base/bandwidth_estimator.h"
 #include "packager/mpd/base/media_info.pb.h"
@@ -112,11 +113,14 @@ class MediaPlaylist {
   /// @param start_byte_offset is the offset of where the subsegment starts.
   ///        This must be 0 if the whole segment is a subsegment.
   /// @param size is size in bytes.
+  /// @param reference_time reference time for wall clock time associated
+  ///        to segments generation start.
   virtual void AddSegment(const std::string& file_name,
                           int64_t start_time,
                           int64_t duration,
                           uint64_t start_byte_offset,
-                          uint64_t size);
+                          uint64_t size,
+                          base::Time reference_time);
 
   /// Keyframes must be added in order. It is also called before the containing
   /// segment being called.
@@ -175,6 +179,9 @@ class MediaPlaylist {
   /// @return the longest segment’s duration. This will return 0 if no
   ///         segments have been added.
   virtual double GetLongestSegmentDuration() const;
+
+  /// @return the start time of the last added segment
+  virtual uint64_t LastSegmentStartTime() const;
 
   /// Set the target duration of this MediaPlaylist.
   /// In other words this is the value for EXT-X-TARGETDURATION.
@@ -236,7 +243,8 @@ class MediaPlaylist {
                            int64_t start_time,
                            int64_t duration,
                            uint64_t start_byte_offset,
-                           uint64_t size);
+                           uint64_t size,
+                           const base::Time reference_time);
   // Adjust the duration of the last SegmentInfoEntry to end on
   // |next_timestamp|.
   void AdjustLastSegmentInfoEntryDuration(int64_t next_timestamp);
@@ -285,7 +293,10 @@ class MediaPlaylist {
   // Once a file is actually removed, it is removed from the list.
   std::list<std::string> segments_to_be_removed_;
 
-  // Used by kVideoIFrameOnly playlists to track the i-frames (key frames).
+  // Store last segment start_time to be able to detect discontinuities
+  int64_t last_segment_start_time_ = 0;
+
+ // Used by kVideoIFrameOnly playlists to track the i-frames (key frames).
   struct KeyFrameInfo {
     int64_t timestamp;
     uint64_t start_byte_offset;

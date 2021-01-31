@@ -93,6 +93,9 @@ class SimpleHlsNotifier : public HlsNotifier {
 
   base::Lock lock_;
 
+  // Reference time to allow computation of segments associated wall time
+  base::Time reference_time_ = base::Time();
+
   DISALLOW_COPY_AND_ASSIGN(SimpleHlsNotifier);
 };
 

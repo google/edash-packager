@@ -373,8 +373,27 @@ bool SimpleHlsNotifier::NotifyNewSegment(uint32_t stream_id,
   const std::string& segment_url =
       GenerateSegmentUrl(segment_name, hls_params().base_url,
                          master_playlist_dir_, media_playlist->file_name());
+
+  // Check if we need to set reference_time_
+  // This need to be adjusted on discontinuity
+  if (hls_params().add_ext_x_program_date_time) {
+    if (reference_time_.is_null() || start_time < media_playlist->LastSegmentStartTime()) {
+      base::Time adjusted_time = base::Time::Now()
+          + base::TimeDelta::FromMilliseconds(hls_params().packaging_time_offset_ms);
+      if (reference_time_.is_null()) {
+        LOG(INFO)
+            << "Init reference time: " << adjusted_time;
+      } else {
+        LOG(WARNING)
+            << "Reset reference time on discontinuity: " << adjusted_time
+            << " prev: " << media_playlist->LastSegmentStartTime() << " cur: " << start_time;
+      }
+      reference_time_ = adjusted_time;
+    }
+  }
+
   media_playlist->AddSegment(segment_url, start_time, duration,
-                             start_byte_offset, size);
+                             start_byte_offset, size, reference_time_);
 
   // Update target duration.
   uint32_t longest_segment_duration =

@@ -30,3 +30,7 @@ DEFINE_int32(hls_media_sequence_number,
               "EXT-X-MEDIA-SEQUENCE value, which allows continuous media "
               "sequence across packager restarts. See #691 for more "
               "information about the reasoning of this and its use cases.");
+DEFINE_int32(hls_ext_x_program_date_time,
+             INT32_MIN,
+             "Enable generation of EXT-X-PROGRAM-DATE-TIME tag with "
+             "a given time offset in milliseconds");
