@@ -10,6 +10,7 @@
 #include <memory>
 #include "packager/file/file.h"
 #include "packager/media/base/muxer_options.h"
+#include "packager/media/base/range.h"
 #include "packager/media/formats/mp2t/pes_packet_generator.h"
 #include "packager/media/formats/mp2t/ts_writer.h"
 #include "packager/status.h"
@@ -22,9 +23,6 @@ class MuxerListener;
 
 namespace mp2t {
 
-// TODO(rkuroiwa): For now, this implements multifile segmenter. Like other
-// make this an abstract super class and implement multifile and single file
-// segmenters.
 class TsSegmenter {
  public:
   // TODO(rkuroiwa): Add progress listener?
@@ -33,16 +31,16 @@ class TsSegmenter {
   /// @param listener is the MuxerListener that should be used to notify events.
   ///        This may be null, in which case no events are sent.
   TsSegmenter(const MuxerOptions& options, MuxerListener* listener);
-  ~TsSegmenter();
+  virtual ~TsSegmenter();
 
   /// Initialize the object.
   /// @param stream_info is the stream info for the segmenter.
   /// @return OK on success.
-  Status Initialize(const StreamInfo& stream_info);
+  virtual Status Initialize(const StreamInfo& stream_info);
 
   /// Finalize the segmenter.
   /// @return OK on success.
-  Status Finalize();
+  virtual Status Finalize();
 
   /// @param sample gets added to this object.
   /// @return OK on success.
@@ -58,7 +56,7 @@ class TsSegmenter {
   // TODO(kqyang): Remove the usage of segment start timestamp and duration in
   // xx_segmenter, which could cause confusions on which is the source of truth
   // as the segment start timestamp and duration could be tracked locally.
-  Status FinalizeSegment(uint64_t start_timestamp, uint64_t duration);
+  virtual Status FinalizeSegment(uint64_t start_timestamp, uint64_t duration);
 
   /// Only for testing.
   void InjectTsWriterForTesting(std::unique_ptr<TsWriter> writer);
@@ -69,7 +67,22 @@ class TsSegmenter {
 
   /// Only for testing.
   void SetSegmentStartedForTesting(bool value);
-  
+
+  const MuxerOptions& options() { return muxer_options_; }
+
+  BufferWriter& getSegmentBuffer() { return segment_buffer_; }
+
+  double& timescale() { return timescale_scale_; }
+  const uint32_t& transport_stream_timestamp_offset() {
+    return transport_stream_timestamp_offset_;
+  }
+  bool& get_segment_started() { return segment_started_; }
+  void set_segment_started(const bool& b) { segment_started_ = b; }
+  MuxerListener* get_muxer_listener() { return listener_; }
+  int64_t& get_segment_start_time() { return segment_start_timestamp_; }
+  std::vector<Range> get_range() { return range_vector; }
+  void add_to_range(const Range& r) { range_vector.push_back(r); }
+
  private:
   Status StartSegmentIfNeeded(int64_t next_pts);
 
@@ -88,11 +101,8 @@ class TsSegmenter {
   // Used for calculating the duration in seconds fo the current segment.
   double timescale_scale_ = 1.0;
 
-  // Used for segment template.
-  uint64_t segment_number_ = 0;
-
   std::unique_ptr<TsWriter> ts_writer_;
- 
+
   BufferWriter segment_buffer_;
 
   // Set to true if segment_buffer_ is initialized, set to false after
@@ -101,6 +111,8 @@ class TsSegmenter {
   std::unique_ptr<PesPacketGenerator> pes_packet_generator_;
 
   int64_t segment_start_timestamp_ = -1;
+  std::vector<Range> range_vector;
+
   DISALLOW_COPY_AND_ASSIGN(TsSegmenter);
 };
 

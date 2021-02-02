@@ -219,23 +219,8 @@ Status ValidateStreamDescriptor(bool dump_stream_info,
   if (output_format == CONTAINER_UNKNOWN) {
     return Status(error::INVALID_ARGUMENT, "Unsupported output format.");
   }
-  if (output_format == MediaContainerName::CONTAINER_MPEG2TS) {
-    if (stream.segment_template.empty()) {
-      return Status(
-          error::INVALID_ARGUMENT,
-          "Please specify 'segment_template'. Single file TS output is "
-          "not supported.");
-    }
-
-    // Right now the init segment is saved in |output| for multi-segment
-    // content. However, for TS all segments must be self-initializing so
-    // there cannot be an init segment.
-    if (stream.output.length()) {
-      return Status(error::INVALID_ARGUMENT,
-                    "All TS segments must be self-initializing. Stream "
-                    "descriptors 'output' or 'init_segment' are not allowed.");
-    }
-  } else if (output_format == CONTAINER_WEBVTT ||
+  
+  if (output_format == CONTAINER_WEBVTT ||
              output_format == CONTAINER_TTML ||
              output_format == CONTAINER_AAC || output_format == CONTAINER_MP3 ||
              output_format == CONTAINER_AC3 ||
@@ -249,7 +234,7 @@ Status ValidateStreamDescriptor(bool dump_stream_info,
           "segment.  Do not specify stream descriptors 'output' or "
           "'init_segment' when using 'segment_template'.");
     }
-  } else {
+  } else if (output_format != MediaContainerName::CONTAINER_MPEG2TS){
     // For any other format, if there is a segment template, there must be an
     // init segment provided.
     if (stream.segment_template.length() && stream.output.empty()) {

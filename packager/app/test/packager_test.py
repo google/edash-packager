@@ -1538,6 +1538,13 @@ class PackagerFunctionalTest(PackagerAppTest):
             ['audio', 'video'], hls=True, test_files=['bear-640x360-ec3.mp4']),
         self._GetFlags(encryption=True, output_hls=True))
     self._CheckTestResults('ec3-and-hls-single-segment-mp4-encrypted')
+  
+  def testHlsByterange(self):
+    self.assertPackageSuccess(
+        self._GetStreams(
+            ['audio', 'video'], hls=True, test_files=['bear-640x360.ts']),
+        self._GetFlags(output_hls=True))
+    self._CheckTestResults('hls-byte-range')
 
   def testEc3PackedAudioEncrypted(self):
     streams = [

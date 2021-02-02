@@ -10,6 +10,8 @@
 #include "packager/base/macros.h"
 #include "packager/media/base/muxer.h"
 #include "packager/media/formats/mp2t/ts_segmenter.h"
+#include "packager/media/formats/mp2t/single_segment_ts_segmenter.h"
+#include "packager/media/formats/mp2t/multi_segment_ts_segmenter.h"
 
 namespace shaka {
 namespace media {

@@ -16,6 +16,7 @@
 #include "packager/media/formats/mp2t/program_map_table_writer.h"
 #include "packager/status.h"
 #include "packager/status_macros.h"
+#include "packager/file/file_util.h"
 
 namespace shaka {
 namespace media {
@@ -45,8 +46,7 @@ TsSegmenter::TsSegmenter(const MuxerOptions& options, MuxerListener* listener)
 TsSegmenter::~TsSegmenter() {}
 
 Status TsSegmenter::Initialize(const StreamInfo& stream_info) {
-  if (muxer_options_.segment_template.empty())
-    return Status(error::MUXER_FAILURE, "Segment template not specified.");
+
   if (!pes_packet_generator_->Initialize(stream_info)) {
     return Status(error::MUXER_FAILURE,
                   "Failed to initialize PesPacketGenerator.");
@@ -147,13 +147,13 @@ Status TsSegmenter::WritePesPackets() {
 
     if (listener_ && IsVideoCodec(codec_) && pes_packet->is_key_frame()) {
 
-      uint64_t start_pos = segment_buffer_.Size();	    
+      uint64_t start_pos = segment_buffer_.Size();
       const int64_t timestamp = pes_packet->pts();
       if (!ts_writer_->AddPesPacket(std::move(pes_packet), &segment_buffer_))
         return Status(error::MUXER_FAILURE, "Failed to add PES packet.");
 
       uint64_t end_pos = segment_buffer_.Size();
-      
+
       listener_->OnKeyFrame(timestamp, start_pos, end_pos - start_pos);
     } else {
       if (!ts_writer_->AddPesPacket(std::move(pes_packet), &segment_buffer_))
@@ -172,39 +172,6 @@ Status TsSegmenter::FinalizeSegment(uint64_t start_timestamp,
   if (!status.ok())
     return status;
 
-  // This method may be called from Finalize() so segment_started_ could
-  // be false.
-  if (!segment_started_)
-    return Status::OK;
-  std::string segment_path =
-        GetSegmentName(muxer_options_.segment_template, segment_start_timestamp_,
-                       segment_number_++, muxer_options_.bandwidth);
-
-  const int64_t file_size = segment_buffer_.Size();
-  std::unique_ptr<File, FileCloser> segment_file;	  
-  segment_file.reset(File::Open(segment_path.c_str(), "w"));
-  if (!segment_file) {
-    return Status(error::FILE_FAILURE,
-                  "Cannot open file for write " + segment_path);  
-  }
-  
-  RETURN_IF_ERROR(segment_buffer_.WriteToFile(segment_file.get()));
-
-  if (!segment_file.release()->Close()) {
-    return Status(
-        error::FILE_FAILURE,
-        "Cannot close file " + segment_path +
-        ", possibly file permission issue or running out of disk space.");  
-  }
-
-  if (listener_) {
-    listener_->OnNewSegment(segment_path,
-                            start_timestamp * timescale_scale_ +
-                                transport_stream_timestamp_offset_,
-                            duration * timescale_scale_, file_size);
-  }
-  segment_started_ = false;
-  
   return Status::OK;
 }
 

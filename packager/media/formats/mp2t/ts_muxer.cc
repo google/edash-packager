@@ -5,6 +5,8 @@
 // https://developers.google.com/open-source/licenses/bsd
 
 #include "packager/media/formats/mp2t/ts_muxer.h"
+#include "packager/media/formats/mp2t/single_segment_ts_segmenter.cc"
+#include "packager/media/formats/mp2t/multi_segment_ts_segmenter.cc"
 
 namespace shaka {
 namespace media {
@@ -21,7 +23,12 @@ Status TsMuxer::InitializeMuxer() {
   if (streams().size() > 1u)
     return Status(error::MUXER_FAILURE, "Cannot handle more than one streams.");
 
-  segmenter_.reset(new TsSegmenter(options(), muxer_listener()));
+  if (options().segment_template.empty()) {
+    segmenter_.reset(new SingleSegmentTsSegmenter(options(), muxer_listener()));
+  } else {
+    segmenter_.reset(new MultiSegmentTsSegmenter(options(), muxer_listener()));
+  }
+
   Status status = segmenter_->Initialize(*streams()[0]);
   FireOnMediaStartEvent();
   return status;
@@ -64,9 +71,8 @@ void TsMuxer::FireOnMediaEndEvent() {
   if (!muxer_listener())
     return;
 
-  // For now, there is no single file TS segmenter. So all the values passed
-  // here are left empty.
   MuxerListener::MediaRanges range;
+  range.subsegment_ranges = segmenter_->get_range();
   muxer_listener()->OnMediaEnd(range, 0);
 }
 
