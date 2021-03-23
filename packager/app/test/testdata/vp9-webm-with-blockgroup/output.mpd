@@ -2,7 +2,7 @@
 <!--Generated with https://github.com/google/shaka-packager version <tag>-<hash>-<test>-->
 <MPD xmlns="urn:mpeg:dash:schema:mpd:2011" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:mpeg:dash:schema:mpd:2011 DASH-MPD.xsd" profiles="urn:mpeg:dash:profile:isoff-on-demand:2011" minBufferTime="PT2S" type="static" mediaPresentationDuration="PT2.7360000610351562S">
   <Period id="0">
-    <AdaptationSet id="0" contentType="video" width="320" height="240" frameRate="1000000/33000" subsegmentAlignment="true" par="4:3">
+    <AdaptationSet id="0" contentType="video" width="320" height="240" frameRate="1000000/34000" subsegmentAlignment="true" par="4:3">
       <Representation id="0" bandwidth="196039" codecs="vp09.00.20.08.01.02.02.02.00" mimeType="video/webm" sar="1:1">
         <BaseURL>bear-vp9-blockgroup-video.webm</BaseURL>
         <SegmentBase indexRange="302-320" timescale="1000000">

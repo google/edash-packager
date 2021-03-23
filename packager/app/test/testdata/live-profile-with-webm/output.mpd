@@ -14,7 +14,7 @@
         </SegmentTemplate>
       </Representation>
     </AdaptationSet>
-    <AdaptationSet id="1" contentType="video" width="640" height="360" frameRate="1000000/33000" segmentAlignment="true" par="16:9">
+    <AdaptationSet id="1" contentType="video" width="640" height="360" frameRate="1000000/34000" segmentAlignment="true" par="16:9">
       <Representation id="1" bandwidth="472384" codecs="vp8" mimeType="video/webm" sar="1:1">
         <SegmentTemplate timescale="1000000" initialization="bear-640x360-video-init.webm" media="bear-640x360-video-$Number$.webm" startNumber="1">
           <SegmentTimeline>
