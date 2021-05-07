@@ -299,6 +299,11 @@ Status ValidateParams(const PackagingParams& packaging_params,
                   "subsegment_sap_aligned to true is not allowed.");
   }
 
+  if (packaging_params.chunking_params.start_segment_number < 0) {
+    return Status(error::INVALID_ARGUMENT,
+                  "Negative --start_segment_number is not allowed.");
+  }
+
   if (stream_descriptors.empty()) {
     return Status(error::INVALID_ARGUMENT,
                   "Stream descriptors cannot be empty.");
@@ -513,8 +518,8 @@ std::unique_ptr<MediaHandler> CreateTextChunker(
     const ChunkingParams& chunking_params) {
   const float segment_length_in_seconds =
       chunking_params.segment_duration_in_seconds;
-  return std::unique_ptr<MediaHandler>(
-      new TextChunker(segment_length_in_seconds));
+  return std::unique_ptr<MediaHandler>(new TextChunker(
+      segment_length_in_seconds, chunking_params.start_segment_number));
 }
 
 Status CreateTtmlJobs(

@@ -38,14 +38,13 @@ class MultiSegmentSegmenter : public Segmenter {
   // Segmenter implementation overrides.
   Status DoInitialize() override;
   Status DoFinalize() override;
-  Status DoFinalizeSegment() override;
+  Status DoFinalizeSegment(int64_t segment_number) override;
 
   // Write segment to file.
   Status WriteInitSegment();
-  Status WriteSegment();
+  Status WriteSegment(int64_t segment_number);
 
   std::unique_ptr<SegmentType> styp_;
-  uint32_t num_segments_;
 
   DISALLOW_COPY_AND_ASSIGN(MultiSegmentSegmenter);
 };

@@ -106,10 +106,6 @@ Representation::Representation(
                      std::move(state_change_listener)) {
   mime_type_ = representation.mime_type_;
   codecs_ = representation.codecs_;
-
-  start_number_ = representation.start_number_;
-  for (const SegmentInfo& segment_info : representation.segment_infos_)
-    start_number_ += segment_info.repeat + 1;
 }
 
 Representation::~Representation() {}
@@ -170,7 +166,8 @@ void Representation::UpdateContentProtectionPssh(const std::string& drm_uuid,
 
 void Representation::AddNewSegment(int64_t start_time,
                                    int64_t duration,
-                                   uint64_t size) {
+                                   uint64_t size,
+                                   int64_t segment_number) {
   if (start_time == 0 && duration == 0) {
     LOG(WARNING) << "Got segment with start_time and duration == 0. Ignoring.";
     return;
@@ -186,7 +183,7 @@ void Representation::AddNewSegment(int64_t start_time,
   if (state_change_listener_)
     state_change_listener_->OnNewSegmentForRepresentation(start_time, duration);
 
-  AddSegmentInfo(start_time, duration);
+  AddSegmentInfo(start_time, duration, segment_number);
   current_buffer_depth_ += segment_infos_.back().duration;
 
   bandwidth_estimator_.AddBlock(
@@ -271,8 +268,7 @@ base::Optional<xml::XmlNode> Representation::GetXml() {
   }
 
   if (HasLiveOnlyFields(media_info_) &&
-      !representation.AddLiveOnlyInfo(media_info_, segment_infos_,
-                                      start_number_)) {
+      !representation.AddLiveOnlyInfo(media_info_, segment_infos_)) {
     LOG(ERROR) << "Failed to add Live info.";
     return base::nullopt;
   }
@@ -330,7 +326,9 @@ bool Representation::HasRequiredMediaInfoFields() const {
   return true;
 }
 
-void Representation::AddSegmentInfo(int64_t start_time, int64_t duration) {
+void Representation::AddSegmentInfo(int64_t start_time,
+                                    int64_t duration,
+                                    int64_t segment_number) {
   const uint64_t kNoRepeat = 0;
   const int64_t adjusted_duration = AdjustDuration(duration);
 
@@ -353,7 +351,8 @@ void Representation::AddSegmentInfo(int64_t start_time, int64_t duration) {
       } else {
         segment_infos_.push_back(
             {previous_segment_end_time,
-             actual_segment_end_time - previous_segment_end_time, kNoRepeat});
+             actual_segment_end_time - previous_segment_end_time, kNoRepeat,
+             segment_number});
       }
       return;
     }
@@ -378,8 +377,8 @@ void Representation::AddSegmentInfo(int64_t start_time, int64_t duration) {
           << previous_segment_end_time << ".";
     }
   }
-
-  segment_infos_.push_back({start_time, adjusted_duration, kNoRepeat});
+  segment_infos_.push_back(
+      {start_time, adjusted_duration, kNoRepeat, segment_number});
 }
 
 bool Representation::ApproximiatelyEqual(int64_t time1, int64_t time2) const {
@@ -438,7 +437,6 @@ void Representation::SlideWindow() {
            current_buffer_depth_ - last->duration >= time_shift_buffer_depth) {
       current_buffer_depth_ -= last->duration;
       RemoveOldSegment(&*last);
-      start_number_++;
     }
     if (last->repeat >= 0)
       break;
@@ -450,13 +448,15 @@ void Representation::RemoveOldSegment(SegmentInfo* segment_info) {
   int64_t segment_start_time = segment_info->start_time;
   segment_info->start_time += segment_info->duration;
   segment_info->repeat--;
+  int64_t start_number = segment_info->start_segment_number;
+  segment_info->start_segment_number++;
 
   if (mpd_options_.mpd_params.preserved_segments_outside_live_window == 0)
     return;
 
   segments_to_be_removed_.push_back(
       media::GetSegmentName(media_info_.segment_template(), segment_start_time,
-                            start_number_ - 1, media_info_.bandwidth()));
+                            start_number, media_info_.bandwidth()));
   while (segments_to_be_removed_.size() >
          mpd_options_.mpd_params.preserved_segments_outside_live_window) {
     VLOG(2) << "Deleting " << segments_to_be_removed_.front();

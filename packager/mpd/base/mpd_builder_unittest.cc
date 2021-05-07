@@ -64,6 +64,7 @@ class MpdBuilderTest : public ::testing::Test {
     // Not relevant in this test.
     const bool kContentProtectionFlag = true;
     const size_t kBytes = 1000;
+    const int64_t kSegmentNumber = 1;
 
     AdaptationSet* adaptation_set =
         period->GetOrCreateAdaptationSet(media_info, kContentProtectionFlag);
@@ -71,7 +72,8 @@ class MpdBuilderTest : public ::testing::Test {
         adaptation_set->AddRepresentation(media_info);
     representation->AddNewSegment(
         segment_start_time_seconds * media_info.reference_time_scale(),
-        segment_duration_seconds * media_info.reference_time_scale(), kBytes);
+        segment_duration_seconds * media_info.reference_time_scale(), kBytes,
+        kSegmentNumber);
   }
 
  protected:

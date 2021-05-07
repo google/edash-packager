@@ -31,6 +31,7 @@ bool IsNewSegmentIndex(int64_t new_index, int64_t current_index) {
 ChunkingHandler::ChunkingHandler(const ChunkingParams& chunking_params)
     : chunking_params_(chunking_params) {
   CHECK_NE(chunking_params.segment_duration_in_seconds, 0u);
+  segment_number_ = chunking_params.start_segment_number;
 }
 
 Status ChunkingHandler::InitializeInternal() {
@@ -144,13 +145,15 @@ Status ChunkingHandler::OnMediaSample(
   return DispatchMediaSample(kStreamIndex, std::move(sample));
 }
 
-Status ChunkingHandler::EndSegmentIfStarted() const {
+Status ChunkingHandler::EndSegmentIfStarted() {
   if (!segment_start_time_)
     return Status::OK;
 
   auto segment_info = std::make_shared<SegmentInfo>();
   segment_info->start_timestamp = segment_start_time_.value();
   segment_info->duration = max_segment_time_ - segment_start_time_.value();
+  segment_info->segment_number = segment_number_++;
+
   return DispatchSegmentInfo(kStreamIndex, std::move(segment_info));
 }
 

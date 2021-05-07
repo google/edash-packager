@@ -38,7 +38,6 @@ class TextMuxer : public Muxer {
 
   uint64_t total_duration_ms_ = 0;
   uint64_t last_cue_ms_ = 0;
-  uint32_t segment_index_ = 0;
 };
 
 }  // namespace media

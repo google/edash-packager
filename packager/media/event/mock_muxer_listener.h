@@ -56,11 +56,12 @@ class MockMuxerListener : public MuxerListener {
   void OnMediaEnd(const MediaRanges& range,
                   float duration_seconds) override;
 
-  MOCK_METHOD4(OnNewSegment,
+  MOCK_METHOD5(OnNewSegment,
                void(const std::string& segment_name,
                     int64_t start_time,
                     int64_t duration,
-                    uint64_t segment_file_size));
+                    uint64_t segment_file_size,
+                    int64_t segment_number));
 
   MOCK_METHOD3(OnKeyFrame,
                void(int64_t timestamp,

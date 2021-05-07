@@ -432,9 +432,12 @@ bool RepresentationXmlNode::AddVODOnlyInfo(const MediaInfo& media_info) {
 
 bool RepresentationXmlNode::AddLiveOnlyInfo(
     const MediaInfo& media_info,
-    const std::list<SegmentInfo>& segment_infos,
-    uint32_t start_number) {
+    const std::list<SegmentInfo>& segment_infos) {
   XmlNode segment_template("SegmentTemplate");
+
+  int start_number =
+      segment_infos.empty() ? 1 : segment_infos.begin()->start_segment_number;
+
   if (media_info.has_reference_time_scale()) {
     RCHECK(segment_template.SetIntegerAttribute(
         "timescale", media_info.reference_time_scale()));

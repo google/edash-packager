@@ -20,6 +20,7 @@ struct SegmentEventInfo {
   // The below two fields are only useful for Segment.
   int64_t duration;
   uint64_t segment_file_size;
+  int64_t segment_number;
 };
 
 struct KeyFrameEvent {

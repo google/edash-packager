@@ -225,7 +225,7 @@ Status Segmenter::FinalizeSegment(size_t stream_id,
   for (std::unique_ptr<Fragmenter>& fragmenter : fragmenters_)
     fragmenter->ClearFragmentFinalized();
   if (!segment_info.is_subsegment) {
-    Status status = DoFinalizeSegment();
+    Status status = DoFinalizeSegment(segment_info.segment_number);
     // Reset segment information to initial state.
     sidx_->references.clear();
     key_frame_infos_.clear();

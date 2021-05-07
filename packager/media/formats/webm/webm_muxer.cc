@@ -79,9 +79,9 @@ Status WebMMuxer::FinalizeSegment(size_t stream_id,
     return Status(error::UNIMPLEMENTED,
                   "Key rotation is not implemented for WebM");
   }
-  return segmenter_->FinalizeSegment(segment_info.start_timestamp,
-                                     segment_info.duration,
-                                     segment_info.is_subsegment);
+  return segmenter_->FinalizeSegment(
+      segment_info.start_timestamp, segment_info.duration,
+      segment_info.is_subsegment, segment_info.segment_number);
 }
 
 void WebMMuxer::FireOnMediaStartEvent() {

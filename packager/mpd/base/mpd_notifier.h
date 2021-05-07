@@ -65,11 +65,13 @@ class MpdNotifier {
   /// @param duration is the duration of the new segment, in units of the
   ///        stream's time scale.
   /// @param size is the new segment size in bytes.
+  /// @param segment_number is the segment number.
   /// @return true on success, false otherwise.
   virtual bool NotifyNewSegment(uint32_t container_id,
                                 uint64_t start_time,
                                 uint64_t duration,
-                                uint64_t size) = 0;
+                                uint64_t size,
+                                int64_t segment_number) = 0;
 
   /// Notifies MpdBuilder that there is a new CueEvent.
   /// @param container_id Container ID obtained from calling

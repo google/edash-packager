@@ -114,7 +114,7 @@ class Muxer : public MediaHandler {
   // In VOD single segment case with Ad Cues, |output_file_name| is allowed to
   // be a template. In this case, there will be NumAdCues + 1 files generated.
   std::string output_file_template_;
-  size_t output_file_index_ = 0;
+  size_t output_file_index_ = 1;
 };
 
 }  // namespace media

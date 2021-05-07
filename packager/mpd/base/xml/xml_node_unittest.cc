@@ -362,17 +362,16 @@ class LiveSegmentTimelineTest : public ::testing::Test {
 };
 
 TEST_F(LiveSegmentTimelineTest, OneSegmentInfo) {
-  const uint32_t kStartNumber = 1;
+  const uint32_t kSegmentNumber = 1;
   const uint64_t kStartTime = 0;
   const uint64_t kDuration = 100;
   const uint64_t kRepeat = 9;
 
   std::list<SegmentInfo> segment_infos = {
-      {kStartTime, kDuration, kRepeat},
+      {kStartTime, kDuration, kRepeat, kSegmentNumber},
   };
   RepresentationXmlNode representation;
-  ASSERT_TRUE(
-      representation.AddLiveOnlyInfo(media_info_, segment_infos, kStartNumber));
+  ASSERT_TRUE(representation.AddLiveOnlyInfo(media_info_, segment_infos));
 
   EXPECT_THAT(
       representation,
@@ -383,17 +382,16 @@ TEST_F(LiveSegmentTimelineTest, OneSegmentInfo) {
 }
 
 TEST_F(LiveSegmentTimelineTest, OneSegmentInfoNonZeroStartTime) {
-  const uint32_t kStartNumber = 1;
+  const uint32_t kSegmentNumber = 1;
   const uint64_t kNonZeroStartTime = 500;
   const uint64_t kDuration = 100;
   const uint64_t kRepeat = 9;
 
   std::list<SegmentInfo> segment_infos = {
-      {kNonZeroStartTime, kDuration, kRepeat},
+      {kNonZeroStartTime, kDuration, kRepeat, kSegmentNumber},
   };
   RepresentationXmlNode representation;
-  ASSERT_TRUE(
-      representation.AddLiveOnlyInfo(media_info_, segment_infos, kStartNumber));
+  ASSERT_TRUE(representation.AddLiveOnlyInfo(media_info_, segment_infos));
 
   EXPECT_THAT(representation,
               XmlNodeEqual(
@@ -407,17 +405,16 @@ TEST_F(LiveSegmentTimelineTest, OneSegmentInfoNonZeroStartTime) {
 }
 
 TEST_F(LiveSegmentTimelineTest, OneSegmentInfoMatchingStartTimeAndNumber) {
-  const uint32_t kStartNumber = 6;
+  const uint32_t kSegmentNumber = 6;
   const uint64_t kNonZeroStartTime = 500;
   const uint64_t kDuration = 100;
   const uint64_t kRepeat = 9;
 
   std::list<SegmentInfo> segment_infos = {
-      {kNonZeroStartTime, kDuration, kRepeat},
+      {kNonZeroStartTime, kDuration, kRepeat, kSegmentNumber},
   };
   RepresentationXmlNode representation;
-  ASSERT_TRUE(
-      representation.AddLiveOnlyInfo(media_info_, segment_infos, kStartNumber));
+  ASSERT_TRUE(representation.AddLiveOnlyInfo(media_info_, segment_infos));
 
   EXPECT_THAT(
       representation,
@@ -428,7 +425,8 @@ TEST_F(LiveSegmentTimelineTest, OneSegmentInfoMatchingStartTimeAndNumber) {
 }
 
 TEST_F(LiveSegmentTimelineTest, AllSegmentsSameDurationExpectLastOne) {
-  const uint32_t kStartNumber = 1;
+  const uint32_t kSegmentNumber1 = 1;
+  const uint32_t kSegmentNumber11 = 11;
 
   const uint64_t kStartTime1 = 0;
   const uint64_t kDuration1 = 100;
@@ -439,12 +437,11 @@ TEST_F(LiveSegmentTimelineTest, AllSegmentsSameDurationExpectLastOne) {
   const uint64_t kRepeat2 = 0;
 
   std::list<SegmentInfo> segment_infos = {
-      {kStartTime1, kDuration1, kRepeat1},
-      {kStartTime2, kDuration2, kRepeat2},
+      {kStartTime1, kDuration1, kRepeat1, kSegmentNumber1},
+      {kStartTime2, kDuration2, kRepeat2, kSegmentNumber11},
   };
   RepresentationXmlNode representation;
-  ASSERT_TRUE(
-      representation.AddLiveOnlyInfo(media_info_, segment_infos, kStartNumber));
+  ASSERT_TRUE(representation.AddLiveOnlyInfo(media_info_, segment_infos));
 
   EXPECT_THAT(
       representation,
@@ -455,7 +452,8 @@ TEST_F(LiveSegmentTimelineTest, AllSegmentsSameDurationExpectLastOne) {
 }
 
 TEST_F(LiveSegmentTimelineTest, SecondSegmentInfoNonZeroRepeat) {
-  const uint32_t kStartNumber = 1;
+  const uint32_t kSegmentNumber1 = 1;
+  const uint32_t kSegmentNumber11 = 11;
 
   const uint64_t kStartTime1 = 0;
   const uint64_t kDuration1 = 100;
@@ -466,12 +464,11 @@ TEST_F(LiveSegmentTimelineTest, SecondSegmentInfoNonZeroRepeat) {
   const uint64_t kRepeat2 = 1;
 
   std::list<SegmentInfo> segment_infos = {
-      {kStartTime1, kDuration1, kRepeat1},
-      {kStartTime2, kDuration2, kRepeat2},
+      {kStartTime1, kDuration1, kRepeat1, kSegmentNumber1},
+      {kStartTime2, kDuration2, kRepeat2, kSegmentNumber11},
   };
   RepresentationXmlNode representation;
-  ASSERT_TRUE(
-      representation.AddLiveOnlyInfo(media_info_, segment_infos, kStartNumber));
+  ASSERT_TRUE(representation.AddLiveOnlyInfo(media_info_, segment_infos));
 
   EXPECT_THAT(representation,
               XmlNodeEqual(
@@ -486,7 +483,8 @@ TEST_F(LiveSegmentTimelineTest, SecondSegmentInfoNonZeroRepeat) {
 }
 
 TEST_F(LiveSegmentTimelineTest, TwoSegmentInfoWithGap) {
-  const uint32_t kStartNumber = 1;
+  const uint32_t kSegmentNumber1 = 1;
+  const uint32_t kSegmentNumber11 = 11;
 
   const uint64_t kStartTime1 = 0;
   const uint64_t kDuration1 = 100;
@@ -498,12 +496,11 @@ TEST_F(LiveSegmentTimelineTest, TwoSegmentInfoWithGap) {
   const uint64_t kRepeat2 = 0;
 
   std::list<SegmentInfo> segment_infos = {
-      {kStartTime1, kDuration1, kRepeat1},
-      {kStartTime2, kDuration2, kRepeat2},
+      {kStartTime1, kDuration1, kRepeat1, kSegmentNumber1},
+      {kStartTime2, kDuration2, kRepeat2, kSegmentNumber11},
   };
   RepresentationXmlNode representation;
-  ASSERT_TRUE(
-      representation.AddLiveOnlyInfo(media_info_, segment_infos, kStartNumber));
+  ASSERT_TRUE(representation.AddLiveOnlyInfo(media_info_, segment_infos));
 
   EXPECT_THAT(representation,
               XmlNodeEqual(
@@ -518,19 +515,18 @@ TEST_F(LiveSegmentTimelineTest, TwoSegmentInfoWithGap) {
 }
 
 TEST_F(LiveSegmentTimelineTest, LastSegmentNumberSupplementalProperty) {
-  const uint32_t kStartNumber = 1;
+  const uint32_t kSegmentNumber = 1;
   const uint64_t kStartTime = 0;
   const uint64_t kDuration = 100;
   const uint64_t kRepeat = 9;
 
   std::list<SegmentInfo> segment_infos = {
-      {kStartTime, kDuration, kRepeat},
+      {kStartTime, kDuration, kRepeat, kSegmentNumber},
   };
   RepresentationXmlNode representation;
   FLAGS_dash_add_last_segment_number_when_needed = true;
 
-  ASSERT_TRUE(
-      representation.AddLiveOnlyInfo(media_info_, segment_infos, kStartNumber));
+  ASSERT_TRUE(representation.AddLiveOnlyInfo(media_info_, segment_infos));
 
   EXPECT_THAT(
       representation,

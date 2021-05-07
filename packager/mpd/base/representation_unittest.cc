@@ -272,6 +272,8 @@ TEST_F(RepresentationTest,
 
   const int64_t kStartTime = 199238u;
   const int64_t kDuration = 98u;
+  const int64_t kSegmentNumber = 1;
+
   std::unique_ptr<MockRepresentationStateChangeListener> listener(
       new MockRepresentationStateChangeListener());
   EXPECT_CALL(*listener, OnNewSegmentForRepresentation(kStartTime, kDuration));
@@ -280,7 +282,8 @@ TEST_F(RepresentationTest,
                            kAnyRepresentationId, std::move(listener));
   EXPECT_TRUE(representation->Init());
 
-  representation->AddNewSegment(kStartTime, kDuration, 10 /* any size */);
+  representation->AddNewSegment(kStartTime, kDuration, 10 /* any size */,
+                                kSegmentNumber);
 }
 
 // Make sure
@@ -456,7 +459,7 @@ class SegmentTemplateTest : public RepresentationTest {
                    int repeat) {
     DCHECK(representation_);
 
-    SegmentInfo s = {start_time, duration, repeat};
+    SegmentInfo s = {start_time, duration, repeat, segment_number_};
     segment_infos_for_expected_out_.push_back(s);
     if (repeat == 0) {
       expected_s_elements_ +=
@@ -467,7 +470,8 @@ class SegmentTemplateTest : public RepresentationTest {
     }
 
     for (int i = 0; i < repeat + 1; ++i) {
-      representation_->AddNewSegment(start_time, duration, size);
+      representation_->AddNewSegment(start_time, duration, size,
+                                     segment_number_++);
       start_time += duration;
       bandwidth_estimator_.AddBlock(
           size, static_cast<double>(duration) / kDefaultTimeScale);
@@ -497,6 +501,7 @@ class SegmentTemplateTest : public RepresentationTest {
   std::list<SegmentInfo> segment_infos_for_expected_out_;
   std::string expected_s_elements_;
   BandwidthEstimator bandwidth_estimator_;
+  int64_t segment_number_ = 1;
 };
 
 // Estimate the bandwidth given the info from AddNewSegment().
@@ -524,12 +529,13 @@ TEST_F(SegmentTemplateTest, RepresentationClone) {
 
   auto cloned_representation =
       CopyRepresentation(*representation_, NoListener());
+
   const char kExpectedXml[] =
       "<Representation id=\"1\" bandwidth=\"0\" "
       " codecs=\"avc1.010101\" mimeType=\"video/mp4\" sar=\"1:1\" "
       " width=\"720\" height=\"480\" frameRate=\"10/5\">\n"
       "  <SegmentTemplate timescale=\"1000\" initialization=\"init.mp4\" "
-      "   media=\"$Number$.mp4\" startNumber=\"2\">\n"
+      "   media=\"$Number$.mp4\" startNumber=\"1\">\n"
       "  </SegmentTemplate>\n"
       "</Representation>\n";
   EXPECT_THAT(cloned_representation->GetXml(), XmlNodeEqual(kExpectedXml));

@@ -327,6 +327,7 @@ base::Optional<PackagingParams> GetPackagingParams() {
   chunking_params.subsegment_duration_in_seconds = FLAGS_fragment_duration;
   chunking_params.segment_sap_aligned = FLAGS_segment_sap_aligned;
   chunking_params.subsegment_sap_aligned = FLAGS_fragment_sap_aligned;
+  chunking_params.start_segment_number = FLAGS_start_segment_number;
 
   int num_key_providers = 0;
   EncryptionParams& encryption_params = packaging_params.encryption_params;

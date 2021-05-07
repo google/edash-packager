@@ -478,7 +478,8 @@ class PackagerAppTest(unittest.TestCase):
                 default_language=None,
                 segment_duration=1.0,
                 use_fake_clock=True,
-                allow_codec_switching=False):
+                allow_codec_switching=False,
+                start_segment_number=None):
     flags = ['--single_threaded']
 
     if not strip_parameter_set_nalus:
@@ -561,6 +562,9 @@ class PackagerAppTest(unittest.TestCase):
 
     if allow_codec_switching:
       flags += ['--allow_codec_switching']
+
+    if start_segment_number:
+      flags += ['--start_segment_number', start_segment_number]
 
     if ad_cues:
       flags += ['--ad_cues', ad_cues]
@@ -780,6 +784,13 @@ class PackagerFunctionalTest(PackagerAppTest):
         streams,
         self._GetFlags(output_dash=True, output_hls=True))
     self._CheckTestResults('hls-only-dash-only')
+
+  def testDashStartNumber(self):
+    audio_video_streams = self._GetStreams(['audio', 'video'], segmented=True)
+    streams = audio_video_streams
+    self.assertPackageSuccess(streams, self._GetFlags(output_dash=True,
+                              start_segment_number='0'))
+    self._CheckTestResults('dash-start-number')
 
   def testAudioVideoWithLanguageOverride(self):
     self.assertPackageSuccess(

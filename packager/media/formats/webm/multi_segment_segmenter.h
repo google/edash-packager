@@ -31,7 +31,8 @@ class MultiSegmentSegmenter : public Segmenter {
   /// @{
   Status FinalizeSegment(uint64_t start_timestamp,
                          uint64_t duration_timestamp,
-                         bool is_subsegment) override;
+                         bool is_subsegment,
+                         int64_t segment_number) override;
   bool GetInitRangeStartAndEnd(uint64_t* start, uint64_t* end) override;
   bool GetIndexRangeStartAndEnd(uint64_t* start, uint64_t* end) override;
   std::vector<Range> GetSegmentRanges() override;

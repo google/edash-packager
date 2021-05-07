@@ -53,3 +53,7 @@ DEFINE_int32(transport_stream_timestamp_offset_ms,
              "input. For example, timestamps from ISO-BMFF after adjusted by "
              "EditList could be negative. In transport streams, timestamps are "
              "not allowed to be less than zero.");
+DEFINE_int64(start_segment_number,
+             1,
+             "Indicates the startNumber in DASH SegmentTemplate and HLS "
+             "segment name.");

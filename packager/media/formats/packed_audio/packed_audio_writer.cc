@@ -79,7 +79,7 @@ Status PackedAudioWriter::FinalizeSegment(size_t stream_id,
       options().segment_template.empty()
           ? options().output_file_name
           : GetSegmentName(options().segment_template, segment_timestamp,
-                           segment_number_++, options().bandwidth);
+                           segment_info.segment_number, options().bandwidth);
 
   // Save |segment_size| as it will be cleared after writing.
   const size_t segment_size = segmenter_->segment_buffer()->Size();
@@ -90,7 +90,8 @@ Status PackedAudioWriter::FinalizeSegment(size_t stream_id,
   if (muxer_listener()) {
     muxer_listener()->OnNewSegment(
         segment_path, segment_timestamp + transport_stream_timestamp_offset_,
-        segment_info.duration * segmenter_->TimescaleScale(), segment_size);
+        segment_info.duration * segmenter_->TimescaleScale(), segment_size,
+        segment_info.segment_number);
   }
   return Status::OK;
 }

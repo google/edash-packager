@@ -20,6 +20,7 @@ struct SegmentInfo {
   // |duration|, then this should be set to 0. The semantics is the same as S@r
   // in the DASH MPD spec.
   int repeat;
+  int64_t start_segment_number;
 };
 }  // namespace shaka
 

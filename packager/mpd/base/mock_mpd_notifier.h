@@ -26,11 +26,12 @@ class MockMpdNotifier : public MpdNotifier {
                bool(const MediaInfo& media_info, uint32_t* container_id));
   MOCK_METHOD2(NotifySampleDuration,
                bool(uint32_t container_id, uint32_t sample_duration));
-  MOCK_METHOD4(NotifyNewSegment,
+  MOCK_METHOD5(NotifyNewSegment,
                bool(uint32_t container_id,
                     uint64_t start_time,
                     uint64_t duration,
-                    uint64_t size));
+                    uint64_t size,
+                    int64_t segment_number));
   MOCK_METHOD2(NotifyCueEvent, bool(uint32_t container_id, uint64_t timestamp));
   MOCK_METHOD4(NotifyEncryptionUpdate,
                bool(uint32_t container_id,

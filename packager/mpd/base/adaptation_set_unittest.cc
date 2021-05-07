@@ -22,6 +22,7 @@ namespace shaka {
 
 namespace {
 const char kNoLanguage[] = "";
+const uint64_t kAnySegmentNumber = 1;
 }  // namespace
 
 class AdaptationSetTest : public ::testing::Test {
@@ -682,23 +683,25 @@ TEST_F(OnDemandAdaptationSetTest, SubsegmentAlignment) {
       adaptation_set->AddRepresentation(ConvertToMediaInfo(k480pMediaInfo));
   // Add a subsegment immediately before adding the 360p Representation.
   // This should still work for VOD.
-  representation_480p->AddNewSegment(kStartTime, kDuration, kAnySize);
+  representation_480p->AddNewSegment(kStartTime, kDuration, kAnySize,
+                                     kAnySegmentNumber);
 
   Representation* representation_360p =
       adaptation_set->AddRepresentation(ConvertToMediaInfo(k360pMediaInfo));
-  representation_360p->AddNewSegment(kStartTime, kDuration, kAnySize);
+  representation_360p->AddNewSegment(kStartTime, kDuration, kAnySize,
+                                     kAnySegmentNumber);
 
   auto aligned = adaptation_set->GetXml();
   EXPECT_THAT(aligned, AttributeEqual("subsegmentAlignment", "true"));
 
   // Unknown because 480p has an extra subsegments.
-  representation_480p->AddNewSegment(11, 20, kAnySize);
+  representation_480p->AddNewSegment(11, 20, kAnySize, kAnySegmentNumber);
   auto alignment_unknown = adaptation_set->GetXml();
   EXPECT_THAT(alignment_unknown, Not(AttributeSet("subsegmentAlignment")));
 
   // Add segments that make them not aligned.
-  representation_360p->AddNewSegment(10, 1, kAnySize);
-  representation_360p->AddNewSegment(11, 19, kAnySize);
+  representation_360p->AddNewSegment(10, 1, kAnySize, kAnySegmentNumber);
+  representation_360p->AddNewSegment(11, 19, kAnySize, kAnySegmentNumber);
 
   auto unaligned = adaptation_set->GetXml();
   EXPECT_THAT(unaligned, Not(AttributeSet("subsegmentAlignment")));
@@ -740,8 +743,11 @@ TEST_F(OnDemandAdaptationSetTest, ForceSetsubsegmentAlignment) {
   static_assert(kStartTime1 != kStartTime2, "StartTimesShouldBeDifferent");
   const uint64_t kDuration = 10u;
   const uint64_t kAnySize = 19834u;
-  representation_480p->AddNewSegment(kStartTime1, kDuration, kAnySize);
-  representation_360p->AddNewSegment(kStartTime2, kDuration, kAnySize);
+
+  representation_480p->AddNewSegment(kStartTime1, kDuration, kAnySize,
+                                     kAnySegmentNumber);
+  representation_360p->AddNewSegment(kStartTime2, kDuration, kAnySize,
+                                     kAnySegmentNumber);
   auto unaligned = adaptation_set->GetXml();
   EXPECT_THAT(unaligned, Not(AttributeSet("subsegmentAlignment")));
 
@@ -791,15 +797,17 @@ TEST_F(LiveAdaptationSetTest, SegmentAlignmentDynamicMpd) {
   Representation* representation_360p =
       adaptation_set->AddRepresentation(ConvertToMediaInfo(k360pMediaInfo));
 
-  representation_480p->AddNewSegment(kStartTime, kDuration, kAnySize);
-  representation_360p->AddNewSegment(kStartTime, kDuration, kAnySize);
+  representation_480p->AddNewSegment(kStartTime, kDuration, kAnySize,
+                                     kAnySegmentNumber);
+  representation_360p->AddNewSegment(kStartTime, kDuration, kAnySize,
+                                     kAnySegmentNumber);
   auto aligned = adaptation_set->GetXml();
   EXPECT_THAT(aligned, AttributeEqual("segmentAlignment", "true"));
 
   // Add segments that make them not aligned.
-  representation_480p->AddNewSegment(11, 20, kAnySize);
-  representation_360p->AddNewSegment(10, 1, kAnySize);
-  representation_360p->AddNewSegment(11, 19, kAnySize);
+  representation_480p->AddNewSegment(11, 20, kAnySize, kAnySegmentNumber);
+  representation_360p->AddNewSegment(10, 1, kAnySize, kAnySegmentNumber);
+  representation_360p->AddNewSegment(11, 19, kAnySize, kAnySegmentNumber);
 
   auto unaligned = adaptation_set->GetXml();
   EXPECT_THAT(unaligned, Not(AttributeSet("segmentAlignment")));
@@ -844,16 +852,18 @@ TEST_F(LiveAdaptationSetTest, SegmentAlignmentStaticMpd) {
   // Representation.
   Representation* representation_480p =
       adaptation_set->AddRepresentation(ConvertToMediaInfo(k480pMediaInfo));
-  representation_480p->AddNewSegment(kStartTime, kDuration, kAnySize);
+  representation_480p->AddNewSegment(kStartTime, kDuration, kAnySize,
+                                     kAnySegmentNumber);
 
   Representation* representation_360p =
       adaptation_set->AddRepresentation(ConvertToMediaInfo(k360pMediaInfo));
-  representation_360p->AddNewSegment(kStartTime, kDuration, kAnySize);
+  representation_360p->AddNewSegment(kStartTime, kDuration, kAnySize,
+                                     kAnySegmentNumber);
 
   representation_480p->AddNewSegment(kStartTime + kDuration, kDuration,
-                                     kAnySize);
+                                     kAnySize, kAnySegmentNumber);
   representation_360p->AddNewSegment(kStartTime + kDuration, kDuration,
-                                     kAnySize);
+                                     kAnySize, kAnySegmentNumber);
 
   auto aligned = adaptation_set->GetXml();
   EXPECT_THAT(aligned, AttributeEqual("segmentAlignment", "true"));

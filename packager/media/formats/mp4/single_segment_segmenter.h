@@ -43,7 +43,7 @@ class SingleSegmentSegmenter : public Segmenter {
   // Segmenter implementation overrides.
   Status DoInitialize() override;
   Status DoFinalize() override;
-  Status DoFinalizeSegment() override;
+  Status DoFinalizeSegment(int64_t segment_number) override;
 
   std::unique_ptr<SegmentIndex> vod_sidx_;
   std::string temp_file_name_;

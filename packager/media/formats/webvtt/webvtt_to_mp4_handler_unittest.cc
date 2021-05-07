@@ -21,6 +21,7 @@ namespace {
 const size_t kStreamIndex = 0;
 const bool kSubSegment = true;
 const bool kEncrypted = true;
+const int64_t kSegmentNumber = 1;
 
 const char* kId1 = "sample-id-1";
 const char* kId2 = "sample-id-2";
@@ -93,7 +94,8 @@ class WebVttToMp4HandlerTest : public MediaHandlerTestBase {
     const bool kIsSubSegment = true;
     int64_t duration = end_time - start_time;
 
-    auto segment = GetSegmentInfo(start_time, duration, !kIsSubSegment);
+    auto segment =
+        GetSegmentInfo(start_time, duration, !kIsSubSegment, kSegmentNumber);
     return In()->Dispatch(
         StreamData::FromSegmentInfo(kStreamIndex, std::move(segment)));
   }

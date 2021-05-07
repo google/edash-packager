@@ -25,6 +25,9 @@ struct ChunkingParams {
   /// Setting to subsegment_sap_aligned to true but segment_sap_aligned to false
   /// is not allowed.
   bool subsegment_sap_aligned = true;
+
+  /// Indicates the startNumber in DASH SegmentTemplate and HLS segment name.
+  int64_t start_segment_number = 1;
 };
 
 }  // namespace shaka

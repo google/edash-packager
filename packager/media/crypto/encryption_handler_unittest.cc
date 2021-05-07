@@ -356,7 +356,7 @@ TEST_P(EncryptionHandlerEncryptionTest, ClearLeadWithNoKeyRotation) {
                                      kIsKeyFrame, kData, kDataSize))));
     ASSERT_OK(Process(StreamData::FromSegmentInfo(
         kStreamIndex, GetSegmentInfo(i * kSegmentDuration, kSegmentDuration,
-                                     !kIsSubsegment))));
+                                     !kIsSubsegment, i + 1))));
     const bool is_encrypted = i == 2;
     const auto& output_stream_data = GetOutputStreamDataVector();
     EXPECT_THAT(output_stream_data,
@@ -435,7 +435,7 @@ TEST_P(EncryptionHandlerEncryptionTest, ClearLeadWithKeyRotation) {
                                      kIsKeyFrame, kData, kDataSize))));
     ASSERT_OK(Process(StreamData::FromSegmentInfo(
         kStreamIndex, GetSegmentInfo(i * kSegmentDuration, kSegmentDuration,
-                                     !kIsSubsegment))));
+                                     !kIsSubsegment, i))));
     const bool is_encrypted = i >= 2;
     const auto& output_stream_data = GetOutputStreamDataVector();
     EXPECT_THAT(output_stream_data,

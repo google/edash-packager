@@ -31,6 +31,8 @@ const bool kSubSegment = true;
 
 const uint64_t kTimescaleMs = 1000;
 
+const int64_t kStartSegmentNumber = 1;
+
 const char* kNoId = "";
 const char* kNoPayload = "";
 }  // namespace
@@ -39,7 +41,8 @@ class TextChunkerTest : public MediaHandlerTestBase {
  protected:
   Status Init(double segment_duration) {
     return SetUpAndInitializeGraph(
-        std::make_shared<TextChunker>(segment_duration), kInputs, kOutputs);
+        std::make_shared<TextChunker>(segment_duration, kStartSegmentNumber),
+        kInputs, kOutputs);
   }
 };
 

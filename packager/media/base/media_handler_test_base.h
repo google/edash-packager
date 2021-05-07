@@ -323,7 +323,8 @@ class MediaHandlerTestBase : public ::testing::Test {
 
   std::unique_ptr<SegmentInfo> GetSegmentInfo(int64_t start_timestamp,
                                               int64_t duration,
-                                              bool is_subsegment) const;
+                                              bool is_subsegment,
+                                              int64_t segment_number) const;
 
   std::unique_ptr<StreamInfo> GetTextStreamInfo(uint32_t timescale) const;
 

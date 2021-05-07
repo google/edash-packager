@@ -720,9 +720,9 @@ void MediaPlaylist::RemoveOldSegment(int64_t start_time) {
   if (stream_type_ == MediaPlaylistStreamType::kVideoIFramesOnly)
     return;
 
-  segments_to_be_removed_.push_back(
-      media::GetSegmentName(media_info_.segment_template(), start_time,
-                            media_sequence_number_, media_info_.bandwidth()));
+  segments_to_be_removed_.push_back(media::GetSegmentName(
+      media_info_.segment_template(), start_time, media_sequence_number_ + 1,
+      media_info_.bandwidth()));
   while (segments_to_be_removed_.size() >
          hls_params_.preserved_segments_outside_live_window) {
     VLOG(2) << "Deleting " << segments_to_be_removed_.front();

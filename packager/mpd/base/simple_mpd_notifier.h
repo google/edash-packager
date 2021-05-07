@@ -41,7 +41,8 @@ class SimpleMpdNotifier : public MpdNotifier {
   bool NotifyNewSegment(uint32_t container_id,
                         uint64_t start_time,
                         uint64_t duration,
-                        uint64_t size) override;
+                        uint64_t size,
+                        int64_t segment_number) override;
   bool NotifyCueEvent(uint32_t container_id, uint64_t timestamp) override;
   bool NotifyEncryptionUpdate(uint32_t container_id,
                               const std::string& drm_uuid,

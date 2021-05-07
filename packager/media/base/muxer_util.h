@@ -29,12 +29,12 @@ Status ValidateSegmentTemplate(const std::string& segment_template);
 /// @param segment_template is the segment template pattern, which should
 ///        comply with ISO/IEC 23009-1:2012 5.3.9.4.4.
 /// @param segment_start_time specifies the segment start time.
-/// @param segment_index specifies the segment index.
+/// @param segment_number specifies the segment number.
 /// @param bandwidth represents the bit rate, in bits/sec, of the stream.
 /// @return The segment name with identifier substituted.
 std::string GetSegmentName(const std::string& segment_template,
                            uint64_t segment_start_time,
-                           uint32_t segment_index,
+                           uint32_t segment_number,
                            uint32_t bandwidth);
 
 }  // namespace media

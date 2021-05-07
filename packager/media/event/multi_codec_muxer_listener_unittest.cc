@@ -27,6 +27,8 @@ const uint64_t kSegmentStartTime = 19283;
 const uint64_t kSegmentDuration = 98028;
 const uint64_t kSegmentSize = 756739;
 const uint32_t kTimescale = 90000;
+const int64_t kSegmentNumber = 10;
+
 MuxerListener::ContainerType kContainer = MuxerListener::kContainerMpeg2ts;
 
 }  // namespace
@@ -79,10 +81,11 @@ TEST_F(MultiCodecMuxerListenerTest, OnNewSegmentAfterOnMediaStartSingleCodec) {
 
   EXPECT_CALL(*listener_for_first_codec_,
               OnNewSegment(StrEq("new_segment_name10.ts"), kSegmentStartTime,
-                           kSegmentDuration, kSegmentSize));
+                           kSegmentDuration, kSegmentSize, kSegmentNumber));
 
   multi_codec_listener_.OnNewSegment("new_segment_name10.ts", kSegmentStartTime,
-                                     kSegmentDuration, kSegmentSize);
+                                     kSegmentDuration, kSegmentSize,
+                                     kSegmentNumber);
 }
 
 TEST_F(MultiCodecMuxerListenerTest, OnMediaStartTwoCodecs) {
@@ -114,13 +117,14 @@ TEST_F(MultiCodecMuxerListenerTest, OnNewSegmentAfterOnMediaStartTwoCodecs) {
 
   EXPECT_CALL(*listener_for_first_codec_,
               OnNewSegment(StrEq("new_segment_name10.ts"), kSegmentStartTime,
-                           kSegmentDuration, kSegmentSize));
+                           kSegmentDuration, kSegmentSize, kSegmentNumber));
   EXPECT_CALL(*listener_for_second_codec_,
               OnNewSegment(StrEq("new_segment_name10.ts"), kSegmentStartTime,
-                           kSegmentDuration, kSegmentSize));
+                           kSegmentDuration, kSegmentSize, kSegmentNumber));
 
   multi_codec_listener_.OnNewSegment("new_segment_name10.ts", kSegmentStartTime,
-                                     kSegmentDuration, kSegmentSize);
+                                     kSegmentDuration, kSegmentSize,
+                                     kSegmentNumber);
 }
 
 }  // namespace media

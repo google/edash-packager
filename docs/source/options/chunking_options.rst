@@ -21,3 +21,7 @@ Chunking options
 
    Force fragments to begin with stream access points. This flag implies
    *segment_sap_aligned*. Default enabled.
+
+--start_segment_number
+
+   Indicates the startNumber in DASH SegmentTemplate and HLS segment name.
