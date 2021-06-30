@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Generated with https://github.com/google/shaka-packager version <tag>-<hash>-<test>-->
+<MPD xmlns="urn:mpeg:dash:schema:mpd:2011" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:mpeg:dash:schema:mpd:2011 DASH-MPD.xsd" profiles="urn:mpeg:dash:profile:isoff-on-demand:2011" minBufferTime="PT2S" type="static" mediaPresentationDuration="PT2.7360665798187256S">
+  <Period id="0">
+    <AdaptationSet id="0" contentType="video" width="640" height="360" frameRate="30000/1001" subsegmentAlignment="true" par="16:9">
+      <Label>English</Label>
+      <Representation id="0" bandwidth="973483" codecs="avc1.64001e" mimeType="video/mp4" sar="1:1">
+        <BaseURL>bear-640x360-video.mp4</BaseURL>
+        <SegmentBase indexRange="863-930" timescale="30000">
+          <Initialization range="0-862"/>
+        </SegmentBase>
+      </Representation>
+    </AdaptationSet>
+    <AdaptationSet id="1" contentType="audio" subsegmentAlignment="true">
+      <Label>English</Label>
+      <Representation id="1" bandwidth="133334" codecs="mp4a.40.2" mimeType="audio/mp4" audioSamplingRate="44100">
+        <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="2"/>
+        <BaseURL>bear-640x360-audio.mp4</BaseURL>
+        <SegmentBase indexRange="797-864" timescale="44100">
+          <Initialization range="0-796"/>
+        </SegmentBase>
+      </Representation>
+    </AdaptationSet>
+  </Period>
+</MPD>

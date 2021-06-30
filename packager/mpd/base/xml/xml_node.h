@@ -174,6 +174,9 @@ class AdaptationSetXmlNode : public RepresentationBaseXmlNode {
   bool AddRoleElement(const std::string& scheme_id_uri,
                       const std::string& value) WARN_UNUSED_RESULT;
 
+  /// @param value is element's content.
+  bool AddLabelElement(const std::string& value) WARN_UNUSED_RESULT;
+
  private:
   DISALLOW_COPY_AND_ASSIGN(AdaptationSetXmlNode);
 };

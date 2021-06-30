@@ -158,6 +158,9 @@ std::string GetAdaptationSetKey(const MediaInfo& media_info,
     key.append("unknown:");
   }
 
+  if (media_info.has_dash_label())
+    key.append(media_info.dash_label() + ":");
+
   key.append(MediaInfo_ContainerType_Name(media_info.container_type()));
   if (!ignore_codec) {
     key.append(":");
@@ -327,8 +330,9 @@ const char kMarlinUUID[] = "5e629af5-38da-4063-8977-97ffbd9902d4";
 const char kFairPlayUUID[] = "29701fe4-3cc7-4a34-8c5b-ae90c7439a47";
 // String representation of media::kPlayReadySystemId.
 const char kPlayReadyUUID[] = "9a04f079-9840-4286-ab92-e65be0885f95";
-// It is RECOMMENDED to include the @value attribute with name and version "MSPR 2.0".
-// See https://docs.microsoft.com/en-us/playready/specifications/mpeg-dash-playready#221-general.
+// It is RECOMMENDED to include the @value attribute with name and version
+// "MSPR 2.0". See
+// https://docs.microsoft.com/en-us/playready/specifications/mpeg-dash-playready#221-general.
 const char kContentProtectionValueMSPR20[] = "MSPR 2.0";
 
 Element GenerateMarlinContentIds(const std::string& key_id) {

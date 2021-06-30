@@ -140,6 +140,9 @@ struct StreamDescriptor {
   bool dash_only = false;
   /// Set to true to indicate that the stream is for hls only.
   bool hls_only = false;
+
+  /// Optional for DASH output. It defines the Label element in Adaptation Set.
+  std::string dash_label;
 };
 
 class SHAKA_EXPORT Packager {

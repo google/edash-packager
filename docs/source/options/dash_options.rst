@@ -95,3 +95,9 @@ DASH options
 
     If enabled, allow adaptive switching between different codecs, if they have 
     the same language, media type (audio, video etc) and container type.
+
+--dash_label <label_name>
+
+    Optional. Will add Label tag to adapation set and will be taken into 
+    consideration along with codecs, language, media type (audio, video etc) 
+    and container type to create different adaptation sets.

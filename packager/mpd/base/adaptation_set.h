@@ -313,6 +313,9 @@ class AdaptationSet {
   // and HD videos in different AdaptationSets can share the same trick play
   // stream.
   std::vector<const AdaptationSet*> trick_play_references_;
+
+  // The label of this AdaptationSet.
+  std::string label_;
 };
 
 }  // namespace shaka

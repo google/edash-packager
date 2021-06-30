@@ -331,6 +331,12 @@ bool AdaptationSetXmlNode::AddRoleElement(const std::string& scheme_id_uri,
   return AddDescriptor("Role", scheme_id_uri, value);
 }
 
+bool AdaptationSetXmlNode::AddLabelElement(const std::string& value) {
+  XmlNode descriptor("Label");
+  descriptor.SetContent(value);
+  return AddChild(std::move(descriptor));
+}
+
 RepresentationXmlNode::RepresentationXmlNode()
     : RepresentationBaseXmlNode("Representation") {}
 RepresentationXmlNode::~RepresentationXmlNode() {}

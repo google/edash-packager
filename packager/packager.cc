@@ -84,6 +84,7 @@ MuxerListenerFactory::StreamData ToMuxerListenerData(
   data.dash_accessiblities = stream.dash_accessiblities;
   data.dash_roles = stream.dash_roles;
   data.dash_only = stream.dash_only;
+  data.dash_label = stream.dash_label;
   return data;
 };
 

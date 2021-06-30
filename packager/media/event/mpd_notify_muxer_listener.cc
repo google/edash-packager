@@ -82,6 +82,9 @@ void MpdNotifyMuxerListener::OnMediaStart(
       media_info->add_dash_roles(role);
   }
 
+  if (!dash_label_.empty())
+    media_info->set_dash_label(dash_label_);
+
   if (is_encrypted_) {
     internal::SetContentProtectionFields(protection_scheme_, default_key_id_,
                                          key_system_info_, media_info.get());

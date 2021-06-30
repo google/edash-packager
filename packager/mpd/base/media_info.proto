@@ -194,6 +194,8 @@ message MediaInfo {
   optional string init_segment_url = 18;
   optional string segment_template_url = 19;
 
+  optional string dash_label = 24;
+
   // HLS only. Defines CHARACTERISTICS attribute of the stream.
   repeated string hls_characteristics = 20;
 

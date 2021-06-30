@@ -53,6 +53,7 @@ class MuxerListenerFactory {
     std::vector<std::string> dash_accessiblities;
     std::vector<std::string> dash_roles;
     bool dash_only = false;
+    std::string dash_label;
   };
 
   /// Create a new muxer listener.

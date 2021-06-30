@@ -42,6 +42,7 @@ std::unique_ptr<MuxerListener> CreateMpdListenerInternal(
   auto listener = base::MakeUnique<MpdNotifyMuxerListener>(notifier);
   listener->set_accessibilities(stream.dash_accessiblities);
   listener->set_roles(stream.dash_roles);
+  listener->set_dash_label(stream.dash_label);
   return listener;
 }
 
