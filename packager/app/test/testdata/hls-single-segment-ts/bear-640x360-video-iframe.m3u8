@@ -1,0 +1,16 @@
+#EXTM3U
+#EXT-X-VERSION:6
+## Generated with https://github.com/google/shaka-packager version <tag>-<hash>-<test>
+#EXT-X-TARGETDURATION:2
+#EXT-X-PLAYLIST-TYPE:VOD
+#EXT-X-I-FRAMES-ONLY
+#EXTINF:1.001,
+#EXT-X-BYTERANGE:15604@376
+bear-640x360-video.ts
+#EXTINF:1.001,
+#EXT-X-BYTERANGE:18236@105656
+bear-640x360-video.ts
+#EXTINF:0.734,
+#EXT-X-BYTERANGE:19928@233684
+bear-640x360-video.ts
+#EXT-X-ENDLIST

@@ -207,11 +207,6 @@ TEST_F(TsSegmenterTest, PassedSegmentDuration) {
   // Doesn't really matter how long this is.
   sample2->set_duration(kInputTimescale * 7);
 
-  EXPECT_CALL(mock_listener,
-              OnNewSegment("memory://file1.ts",
-		           kFirstPts * kTimeScale / kInputTimescale,
-                           kTimeScale * 11, _));
-
   Sequence writer_sequence;
   EXPECT_CALL(*mock_ts_writer_, NewSegment(_))
       .InSequence(writer_sequence)
@@ -243,10 +238,6 @@ TEST_F(TsSegmenterTest, PassedSegmentDuration) {
       .WillOnce(Return(0u));
 
   EXPECT_CALL(*mock_pes_packet_generator_, Flush())
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*mock_ts_writer_, NewSegment(_))
-      .InSequence(writer_sequence)
       .WillOnce(Return(true));
 
   EXPECT_CALL(*mock_ts_writer_, AddPesPacketMock(_, _))
@@ -393,8 +384,6 @@ TEST_F(TsSegmenterTest, EncryptedSample) {
   EXPECT_CALL(*mock_pes_packet_generator_, GetNextPesPacketMock())
       .InSequence(pes_packet_sequence)
       .WillOnce(Return(new PesPacket()));
-
-  EXPECT_CALL(mock_listener, OnNewSegment("memory://file1.ts", _, _, _));
 
   MockTsWriter* mock_ts_writer_raw = mock_ts_writer_.get();
 

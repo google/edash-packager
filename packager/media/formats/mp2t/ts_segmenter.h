@@ -22,9 +22,6 @@ class MuxerListener;
 
 namespace mp2t {
 
-// TODO(rkuroiwa): For now, this implements multifile segmenter. Like other
-// make this an abstract super class and implement multifile and single file
-// segmenters.
 class TsSegmenter {
  public:
   // TODO(rkuroiwa): Add progress listener?
@@ -70,13 +67,22 @@ class TsSegmenter {
   /// Only for testing.
   void SetSegmentStartedForTesting(bool value);
 
+  int64_t segment_start_timestamp() const { return segment_start_timestamp_; }
+  BufferWriter* segment_buffer() { return &segment_buffer_; }
+  void set_segment_started(bool value) { segment_started_ = value; }
+  bool segment_started() const { return segment_started_; }
+
+  double timescale() const { return timescale_scale_; }
+  uint32_t transport_stream_timestamp_offset() const {
+    return transport_stream_timestamp_offset_;
+  }
+
  private:
   Status StartSegmentIfNeeded(int64_t next_pts);
 
   // Writes PES packets (carried in TsPackets) to a buffer.
   Status WritePesPackets();
 
-  const MuxerOptions& muxer_options_;
   MuxerListener* const listener_;
 
   // Codec for the stream.
@@ -84,19 +90,16 @@ class TsSegmenter {
   std::vector<uint8_t> audio_codec_config_;
 
   const uint32_t transport_stream_timestamp_offset_ = 0;
-  // Scale used to scale the input stream to TS's timesccale (which is 90000).
+  // Scale used to scale the input stream to TS's timescale (which is 90000).
   // Used for calculating the duration in seconds fo the current segment.
   double timescale_scale_ = 1.0;
-
-  // Used for segment template.
-  uint64_t segment_number_ = 0;
 
   std::unique_ptr<TsWriter> ts_writer_;
 
   BufferWriter segment_buffer_;
 
   // Set to true if segment_buffer_ is initialized, set to false after
-  // FinalizeSegment() succeeds.
+  // FinalizeSegment() succeeds in ts_muxer.
   bool segment_started_ = false;
   std::unique_ptr<PesPacketGenerator> pes_packet_generator_;
 

@@ -30,12 +30,27 @@ class TsMuxer : public Muxer {
   Status FinalizeSegment(size_t stream_id,
                          const SegmentInfo& sample) override;
 
+  Status WriteSegment(const std::string& segment_path,
+                      BufferWriter* segment_buffer);
+  Status CloseFile(std::unique_ptr<File, FileCloser> file);
+
   void FireOnMediaStartEvent();
   void FireOnMediaEndEvent();
 
   std::unique_ptr<TsSegmenter> segmenter_;
   int64_t sample_durations_[2];
   int64_t num_samples_ = 0;
+
+  // Used in multi-segment mode for segment template.
+  uint64_t segment_number_ = 0;
+
+  // Used in single segment mode.
+  std::unique_ptr<File, FileCloser> output_file_;
+
+  // Keeps track of segment ranges in single segment mode.
+  MuxerListener::MediaRanges media_ranges_;
+
+  uint64_t total_duration_ = 0;
 
   DISALLOW_COPY_AND_ASSIGN(TsMuxer);
 };
