@@ -435,6 +435,7 @@ base::Optional<PackagingParams> GetPackagingParams() {
   mp4_params.generate_sidx_in_media_segments =
       FLAGS_generate_sidx_in_media_segments;
   mp4_params.include_pssh_in_stream = FLAGS_mp4_include_pssh_in_stream;
+  mp4_params.initial_sequence_number = FLAGS_mp4_initial_sequence_number;
 
   packaging_params.transport_stream_timestamp_offset_ms =
       FLAGS_transport_stream_timestamp_offset_ms;

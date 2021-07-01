@@ -53,3 +53,7 @@ DEFINE_int32(transport_stream_timestamp_offset_ms,
              "input. For example, timestamps from ISO-BMFF after adjusted by "
              "EditList could be negative. In transport streams, timestamps are "
              "not allowed to be less than zero.");
+DEFINE_int32(mp4_initial_sequence_number,
+             1,
+             "Sets the initialize sequence number in the mp4 moof->mfhd. "
+             "Otherwise defaults to 1.");
